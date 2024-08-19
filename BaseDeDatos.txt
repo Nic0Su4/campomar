@@ -1,0 +1,128 @@
+-- Estructura de la Base de Datos 
+
+-- Tabla TipoEmpleado
+CREATE TABLE TipoEmpleado (
+    TipoEmpleadoID INT PRIMARY KEY AUTO_INCREMENT,
+    Descripcion VARCHAR(50)
+);
+
+-- Tabla Empleados
+CREATE TABLE Empleados (
+    EmpleadoID INT PRIMARY KEY AUTO_INCREMENT,
+    Nombre VARCHAR(100),
+    TipoEmpleadoID INT,
+    FOREIGN KEY (TipoEmpleadoID) REFERENCES TipoEmpleado(TipoEmpleadoID)
+);
+
+-- Tabla Platos
+CREATE TABLE Platos (
+    PlatoID INT PRIMARY KEY AUTO_INCREMENT,
+    Descripcion VARCHAR(255),
+    Precio DECIMAL(10, 2)
+);
+
+-- Tabla Pedidos
+CREATE TABLE Pedidos (
+    PedidoID INT PRIMARY KEY AUTO_INCREMENT,
+    EmpleadoID INT,
+    PlatoID INT,
+    Cantidad INT,
+    PrecioTotal DECIMAL(10, 2),
+    FOREIGN KEY (EmpleadoID) REFERENCES Empleados(EmpleadoID),
+    FOREIGN KEY (PlatoID) REFERENCES Platos(PlatoID)
+);
+
+-- Procedimientos almacenados 
+-- Tabla TipoEmpleado
+DELIMITER //
+CREATE PROCEDURE InsertarTipoEmpleado(IN p_Descripcion VARCHAR(50))
+BEGIN
+    INSERT INTO TipoEmpleado (Descripcion) VALUES (p_Descripcion);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE EliminarTipoEmpleado(IN p_TipoEmpleadoID INT)
+BEGIN
+    DELETE FROM TipoEmpleado WHERE TipoEmpleadoID = p_TipoEmpleadoID;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE EditarTipoEmpleado(IN p_TipoEmpleadoID INT, IN p_Descripcion VARCHAR(50))
+BEGIN
+    UPDATE TipoEmpleado SET Descripcion = p_Descripcion WHERE TipoEmpleadoID = p_TipoEmpleadoID;
+END //
+DELIMITER ;
+
+-- Tabla Empleados
+DELIMITER //
+CREATE PROCEDURE InsertarEmpleado(IN p_Nombre VARCHAR(100), IN p_TipoEmpleadoID INT)
+BEGIN
+    INSERT INTO Empleados (Nombre, TipoEmpleadoID) VALUES (p_Nombre, p_TipoEmpleadoID);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE EliminarEmpleado(IN p_EmpleadoID INT)
+BEGIN
+    DELETE FROM Empleados WHERE EmpleadoID = p_EmpleadoID;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE EditarEmpleado(IN p_EmpleadoID INT, IN p_Nombre VARCHAR(100), IN p_TipoEmpleadoID INT)
+BEGIN
+    UPDATE Empleados SET Nombre = p_Nombre, TipoEmpleadoID = p_TipoEmpleadoID WHERE EmpleadoID = p_EmpleadoID;
+END //
+DELIMITER ;
+
+-- Tabla Platos
+DELIMITER //
+CREATE PROCEDURE InsertarPlato(IN p_Descripcion VARCHAR(255), IN p_Precio DECIMAL(10,2))
+BEGIN
+    INSERT INTO Platos (Descripcion, Precio) VALUES (p_Descripcion, p_Precio);
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE EliminarPlato(IN p_PlatoID INT)
+BEGIN
+    DELETE FROM Platos WHERE PlatoID = p_PlatoID;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE EditarPlato(IN p_PlatoID INT, IN p_Descripcion VARCHAR(255), IN p_Precio DECIMAL(10,2))
+BEGIN
+    UPDATE Platos SET Descripcion = p_Descripcion, Precio = p_Precio WHERE PlatoID = p_PlatoID;
+END //
+DELIMITER ;
+
+-- Tabla Pedidos
+DELIMITER //
+CREATE PROCEDURE InsertarPedido(IN p_EmpleadoID INT, IN p_PlatoID INT, IN p_Cantidad INT)
+BEGIN
+    INSERT INTO Pedidos (EmpleadoID, PlatoID, Cantidad, PrecioTotal)
+    VALUES (p_EmpleadoID, p_PlatoID, p_Cantidad, p_Cantidad * (SELECT Precio FROM Platos WHERE PlatoID = p_PlatoID));
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE EliminarPedido(IN p_PedidoID INT)
+BEGIN
+    DELETE FROM Pedidos WHERE PedidoID = p_PedidoID;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE EditarPedido(IN p_PedidoID INT, IN p_EmpleadoID INT, IN p_PlatoID INT, IN p_Cantidad INT)
+BEGIN
+    UPDATE Pedidos
+    SET EmpleadoID = p_EmpleadoID,
+        PlatoID = p_PlatoID,
+        Cantidad = p_Cantidad,
+        PrecioTotal = p_Cantidad * (SELECT Precio FROM Platos WHERE PlatoID = p_PlatoID)
+    WHERE PedidoID = p_PedidoID;
+END //
+DELIMITER ;
