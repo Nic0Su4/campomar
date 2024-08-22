@@ -1,3 +1,4 @@
+
 -- Estructura de la Base de Datos 
 
 -- Tabla TipoEmpleado
@@ -11,6 +12,7 @@ CREATE TABLE Empleados (
     EmpleadoID INT PRIMARY KEY AUTO_INCREMENT,
     Nombre VARCHAR(100),
     TipoEmpleadoID INT,
+    Password VARCHAR(255),
     FOREIGN KEY (TipoEmpleadoID) REFERENCES TipoEmpleado(TipoEmpleadoID)
 );
 
@@ -31,6 +33,17 @@ CREATE TABLE Pedidos (
     FOREIGN KEY (EmpleadoID) REFERENCES Empleados(EmpleadoID),
     FOREIGN KEY (PlatoID) REFERENCES Platos(PlatoID)
 );
+
+-- Índices
+CREATE INDEX idx_EmpleadoID ON Pedidos(EmpleadoID);
+CREATE INDEX idx_PlatoID ON Pedidos(PlatoID);
+
+-- Restricciones de Integridad
+ALTER TABLE Pedidos
+ADD CONSTRAINT chk_Cantidad CHECK (Cantidad > 0);
+
+ALTER TABLE Empleados
+ADD CONSTRAINT chk_Nombre CHECK (Nombre <> '');
 
 -- Procedimientos almacenados 
 -- Tabla TipoEmpleado
@@ -57,9 +70,10 @@ DELIMITER ;
 
 -- Tabla Empleados
 DELIMITER //
-CREATE PROCEDURE InsertarEmpleado(IN p_Nombre VARCHAR(100), IN p_TipoEmpleadoID INT)
+CREATE PROCEDURE InsertarEmpleado(IN p_Nombre VARCHAR(100), IN p_TipoEmpleadoID INT, IN p_Password VARCHAR(255))
 BEGIN
-    INSERT INTO Empleados (Nombre, TipoEmpleadoID) VALUES (p_Nombre, p_TipoEmpleadoID);
+    INSERT INTO Empleados (Nombre, TipoEmpleadoID, Password) 
+    VALUES (p_Nombre, p_TipoEmpleadoID, SHA2(p_Password, 256));
 END //
 DELIMITER ;
 
@@ -71,9 +85,16 @@ END //
 DELIMITER ;
 
 DELIMITER //
-CREATE PROCEDURE EditarEmpleado(IN p_EmpleadoID INT, IN p_Nombre VARCHAR(100), IN p_TipoEmpleadoID INT)
+CREATE PROCEDURE EditarEmpleado(IN p_EmpleadoID INT, IN p_Nombre VARCHAR(100), IN p_TipoEmpleadoID INT, IN p_Password VARCHAR(255))
 BEGIN
-    UPDATE Empleados SET Nombre = p_Nombre, TipoEmpleadoID = p_TipoEmpleadoID WHERE EmpleadoID = p_EmpleadoID;
+    UPDATE Empleados SET Nombre = p_Nombre, TipoEmpleadoID = p_TipoEmpleadoID, Password = SHA2(p_Password, 256) WHERE EmpleadoID = p_EmpleadoID;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE LeerEmpleados()
+BEGIN
+    SELECT * FROM Empleados;
 END //
 DELIMITER ;
 
@@ -96,6 +117,13 @@ DELIMITER //
 CREATE PROCEDURE EditarPlato(IN p_PlatoID INT, IN p_Descripcion VARCHAR(255), IN p_Precio DECIMAL(10,2))
 BEGIN
     UPDATE Platos SET Descripcion = p_Descripcion, Precio = p_Precio WHERE PlatoID = p_PlatoID;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE LeerPlatos()
+BEGIN
+    SELECT * FROM Platos;
 END //
 DELIMITER ;
 
@@ -124,5 +152,68 @@ BEGIN
         Cantidad = p_Cantidad,
         PrecioTotal = p_Cantidad * (SELECT Precio FROM Platos WHERE PlatoID = p_PlatoID)
     WHERE PedidoID = p_PedidoID;
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE LeerPedidos()
+BEGIN
+    SELECT * FROM Pedidos;
+END //
+DELIMITER ;
+
+-- Triggers
+DELIMITER //
+CREATE TRIGGER ActualizarPrecioTotal
+AFTER INSERT ON Pedidos
+FOR EACH ROW
+BEGIN
+    DECLARE precio DECIMAL(10, 2);
+    -- Obtener el precio del plato
+    SELECT Precio INTO precio FROM Platos WHERE PlatoID = NEW.PlatoID;
+    -- Actualizar el precio total en el pedido
+    UPDATE Pedidos
+    SET PrecioTotal = NEW.Cantidad * precio
+    WHERE PedidoID = NEW.PedidoID;
+END //
+DELIMITER ;
+
+-- Tabla Auditoria
+CREATE TABLE Auditoria (
+    AuditoriaID INT PRIMARY KEY AUTO_INCREMENT,
+    Operacion VARCHAR(10),
+    TablaAfectada VARCHAR(50),
+    IDAfectado INT,
+    Fecha TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    Usuario VARCHAR(50)
+);
+
+DELIMITER //
+CREATE TRIGGER AuditoriaEmpleadosInsert
+AFTER INSERT ON Empleados
+FOR EACH ROW
+BEGIN
+    INSERT INTO Auditoria (Operacion, TablaAfectada, IDAfectado, Usuario)
+    VALUES ('INSERT', 'Empleados', NEW.EmpleadoID, USER());
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER AuditoriaEmpleadosUpdate
+AFTER UPDATE ON Empleados
+FOR EACH ROW
+BEGIN
+    INSERT INTO Auditoria (Operacion, TablaAfectada, IDAfectado, Usuario)
+    VALUES ('UPDATE', 'Empleados', NEW.EmpleadoID, USER());
+END //
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER AuditoriaEmpleadosDelete
+AFTER DELETE ON Empleados
+FOR EACH ROW
+BEGIN
+    INSERT INTO Auditoria (Operacion, TablaAfectada, IDAfectado, Usuario)
+    VALUES ('DELETE', 'Empleados', OLD.EmpleadoID, USER());
 END //
 DELIMITER ;
