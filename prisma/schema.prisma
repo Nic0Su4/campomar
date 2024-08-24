@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model auditoria {
+  AuditoriaID   Int       @id @default(autoincrement())
+  Operacion     String?   @db.VarChar(10)
+  TablaAfectada String?   @db.VarChar(50)
+  IDAfectado    Int?
+  Fecha         DateTime? @default(now()) @db.Timestamp(0)
+  Usuario       String?   @db.VarChar(50)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model empleados {
+  EmpleadoID     Int           @id @default(autoincrement())
+  Nombre         String?       @db.VarChar(100)
+  TipoEmpleadoID Int?
+  DNI            String?       @unique(map: "DNI_UNIQUE") @db.Char(8)
+  Password       String?       @db.VarChar(255)
+  tipoempleado   tipoempleado? @relation(fields: [TipoEmpleadoID], references: [TipoEmpleadoID], onDelete: NoAction, onUpdate: NoAction, map: "empleados_ibfk_1")
+  pedidos        pedidos[]
+
+  @@index([TipoEmpleadoID], map: "TipoEmpleadoID")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model pedidos {
+  PedidoID    Int        @id @default(autoincrement())
+  EmpleadoID  Int?
+  PlatoID     Int?
+  Cantidad    Int?
+  PrecioTotal Decimal?   @db.Decimal(10, 2)
+  empleados   empleados? @relation(fields: [EmpleadoID], references: [EmpleadoID], onDelete: NoAction, onUpdate: NoAction, map: "pedidos_ibfk_1")
+  platos      platos?    @relation(fields: [PlatoID], references: [PlatoID], onDelete: NoAction, onUpdate: NoAction, map: "pedidos_ibfk_2")
+
+  @@index([EmpleadoID], map: "idx_EmpleadoID")
+  @@index([PlatoID], map: "idx_PlatoID")
+}
+
+model platos {
+  PlatoID     Int       @id @default(autoincrement())
+  Descripcion String?   @db.VarChar(255)
+  Precio      Decimal?  @db.Decimal(10, 2)
+  pedidos     pedidos[]
+}
+
+model tipoempleado {
+  TipoEmpleadoID Int         @id @default(autoincrement())
+  Descripcion    String?     @db.VarChar(50)
+  empleados      empleados[]
+}
