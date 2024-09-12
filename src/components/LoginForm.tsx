@@ -13,7 +13,6 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import prisma from "@/lib/db";
 import { useEmpleadoStore } from "@/store/empleado";
 import { useRouter } from "next/navigation";
 import { empleados } from "@prisma/client";
@@ -64,7 +63,10 @@ const LoginForm = () => {
 
       const empleado = data.empleado as empleados;
 
+      localStorage.setItem("empleado", JSON.stringify(empleado));
+
       setEmpleado(empleado);
+
       if (empleado.TipoEmpleadoID === 2) {
         router.push("/admin");
       } else {
