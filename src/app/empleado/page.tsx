@@ -45,7 +45,7 @@ const EmpleadoPage = () => {
       <CardEmpleado
         texto="Ver Carta"
         icono={<BookOpen size={60} />}
-        direccion="/empleado/mis-datos"
+        direccion="/empleado/carta"
       />
       <CardEmpleado
         texto="Pedidos"

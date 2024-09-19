@@ -16,6 +16,8 @@ import { Input } from "./ui/input";
 import { useEmpleadoStore } from "@/store/empleado";
 import { useRouter } from "next/navigation";
 import { empleados } from "@prisma/client";
+import { useState } from "react";
+import { Spinner } from "./ui/spinner";
 
 const FormSchema = z.object({
   DNI: z
@@ -40,8 +42,10 @@ const LoginForm = () => {
 
   const setEmpleado = useEmpleadoStore((state: any) => state.setEmpleado);
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(false);
 
   const onSubmit = async ({ DNI, password }: z.infer<typeof FormSchema>) => {
+    setIsLoading(true);
     try {
       const response = await fetch("/api/login", {
         method: "POST",
@@ -58,6 +62,7 @@ const LoginForm = () => {
           type: "manual",
           message: data.message || "DNI o contraseña incorrectos",
         });
+        setIsLoading(false);
         return;
       }
 
@@ -117,8 +122,19 @@ const LoginForm = () => {
           />
         </div>
 
-        <Button className="w-full mt-6 bg-brandSecondary" type="submit">
-          Inicia sesión
+        <Button
+          className="w-full mt-6 bg-brandSecondary"
+          type="submit"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Spinner size="medium" className="mr-2" />
+              Iniciando sesión...
+            </>
+          ) : (
+            "Iniciar sesión"
+          )}
         </Button>
       </form>
       <div className="mx-auto my-4 flex w-full items-center justify-evenly before:mr-4 before:block before:h-px before:flex-grow before:bg-stone-400 after:ml-4 after:block after:h-px after:flex-grow after:bg-stone-400">

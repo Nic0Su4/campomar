@@ -36,6 +36,7 @@ model pedidos {
   PlatoID     Int?
   Cantidad    Int?
   PrecioTotal Decimal?   @db.Decimal(10, 2)
+  mesas       mesas[]
   empleados   empleados? @relation(fields: [EmpleadoID], references: [EmpleadoID], onDelete: NoAction, onUpdate: NoAction, map: "pedidos_ibfk_1")
   platos      platos?    @relation(fields: [PlatoID], references: [PlatoID], onDelete: NoAction, onUpdate: NoAction, map: "pedidos_ibfk_2")
 
@@ -54,4 +55,14 @@ model tipoempleado {
   TipoEmpleadoID Int         @id @default(autoincrement())
   Descripcion    String?     @db.VarChar(50)
   empleados      empleados[]
+}
+
+model mesas {
+  MesaID     Int      @id @default(autoincrement())
+  NumeroMesa Int
+  Estado     String   @default("Libre") @db.VarChar(10)
+  PedidoID   Int?
+  pedidos    pedidos? @relation(fields: [PedidoID], references: [PedidoID], onUpdate: NoAction, map: "fk_pedido")
+
+  @@index([PedidoID], map: "fk_pedido")
 }

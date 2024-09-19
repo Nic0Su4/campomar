@@ -10,18 +10,25 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useEmpleadoStore } from "@/store/empleado";
-import { empleados } from "@prisma/client";
+import { empleados, mesas } from "@prisma/client";
 import { Clock, Edit, Plus, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
-interface Props {
-  params: { id: number };
-}
-
-const MesaPage = ({ params }: Props) => {
+export const MesaOcupada = () => {
   const empleado: empleados = useEmpleadoStore((state: any) => state.empleado);
-  const { id } = params;
   const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [selectedTables, setSelectedTables] = useState<number[]>([]);
+
+  useEffect(() => {
+    const mesasParam = searchParams.get("mesas");
+    if (mesasParam) {
+      const mesasArray = mesasParam.split(",").map(Number); // Convertir la cadena a un array de números
+      setSelectedTables(mesasArray);
+    }
+  }, [searchParams]);
 
   const handleGoBack = () => {
     router.back();
@@ -36,7 +43,9 @@ const MesaPage = ({ params }: Props) => {
         <div className="flex flex-col md:flex-row p-6 gap-8">
           <div className="w-full md:w-1/3 space-y-6">
             <div className="bg-secondary p-6 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4">Mesa {id}</h2>
+              <h2 className="text-2xl font-semibold mb-4">
+                Mesa(s) {selectedTables.join(", ")}
+              </h2>
               <div className="flex justify-between items-center">
                 <span className="bg-red-100 text-red-800 text-sm font-medium px-2.5 py-0.5 rounded">
                   Ocupado
@@ -97,5 +106,3 @@ const MesaPage = ({ params }: Props) => {
     </div>
   );
 };
-
-export default MesaPage;
