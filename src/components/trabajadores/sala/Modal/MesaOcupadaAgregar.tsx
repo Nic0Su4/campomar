@@ -1,8 +1,16 @@
-"use client";
-
-import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import React from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -12,10 +20,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, ShoppingCart, Search, Trash } from "lucide-react"; // Se agrega Trash y Minus para iconos
-import { empleados, mesas, platos } from "@prisma/client";
-import { useEmpleadoStore } from "@/store/empleado";
-import { useRouter } from "next/navigation";
+import { Plus, Search, Trash } from "lucide-react"; // Se agrega Trash y Minus para iconos
+import { platos } from "@prisma/client";
 import {
   Select,
   SelectContent,
@@ -24,23 +30,21 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-interface MesaProps {
-  mesas: mesas[];
+interface Props {
+  addPlatoToPedido: (platoId: number, cantidad: number) => Promise<void>;
+  pedido: any;
 }
 
 interface PedidoItem extends platos {
   Cantidad: number;
 }
 
-export default function MesaLibre({ mesas }: MesaProps) {
-  const router = useRouter();
-
+export const MesaOcupadaAgregar = ({ addPlatoToPedido, pedido }: Props) => {
   const [orderItems, setOrderItems] = useState<PedidoItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [platos, setPlatos] = useState<PedidoItem[]>([]);
   const [filteredPlatos, setFilteredPlatos] = useState<PedidoItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const empleado: empleados = useEmpleadoStore((state: any) => state.empleado);
   const [filterCategory, setFilterCategory] = useState<string>("");
 
   // useEffect para hacer fetch de los platos
@@ -81,8 +85,19 @@ export default function MesaLibre({ mesas }: MesaProps) {
       }
       return plato.CategoriaID === parseInt(filterCategory);
     });
-    setFilteredPlatos(categoryFiltered);
-  }, [searchTerm, filterCategory, platos]);
+
+    if (!pedido) return;
+    console.log(pedido.detalles);
+
+    const uniqueFilteredPlatos = categoryFiltered.filter(
+      (plato) =>
+        !pedido.detalles.some(
+          (orderItem: any) => orderItem.PlatoID === plato.PlatoID
+        )
+    );
+
+    setFilteredPlatos(uniqueFilteredPlatos);
+  }, [searchTerm, filterCategory, platos, pedido]);
 
   const addToOrder = (plato: PedidoItem) => {
     const existingItem = orderItems.find(
@@ -134,129 +149,47 @@ export default function MesaLibre({ mesas }: MesaProps) {
     setFilteredPlatos(categoryFiltered);
   }, [searchTerm, filterCategory, platos]);
 
-  const total = orderItems.reduce(
-    (sum, item) => sum + (Number(item.Precio) ?? 0) * item.Cantidad,
-    0
-  );
-
   if (isLoading) {
     return <div>Cargando...</div>;
   }
 
-  const handleRealizarPedido = async () => {
+  const handleAddPlatos = async () => {
+    setIsLoading(true);
     try {
-      // Creamos el pedido
-      const nuevoPedido = {
-        EmpleadoID: empleado.EmpleadoID,
-        Fecha: new Date(),
-        Total: total,
-      };
-
-      const response = await fetch("/api/pedidos", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(nuevoPedido),
-      });
-
-      if (!response.ok) {
-        throw new Error("Error al crear el pedido");
-      }
-
-      // Relacionamos el pedido con los platos
-      const pedido = await response.json();
-      const PedidoID = pedido.PedidoID;
-
-      // Usamos Promise.all para hacer todas las peticiones en paralelo
-      const mesasDetallePromise = await Promise.all(
-        orderItems.map((item) => {
-          return fetch("/api/detallepedidos", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              PedidoID,
-              PlatoID: item.PlatoID,
-              Cantidad: item.Cantidad,
-            }),
-          });
-        })
+      await Promise.all(
+        orderItems.map((item) => addPlatoToPedido(item.PlatoID, item.Cantidad))
       );
-
-      if (!mesasDetallePromise.every((response) => response.ok)) {
-        throw new Error("Error al crear el detalle del pedido");
-      }
-
-      // Relacionamos el pedido con las mesas
-      const mesasRelacionadas = mesas.map((mesa) => ({
-        PedidoID,
-        MesaID: mesa.MesaID,
-      }));
-
-      const responesMesas = await Promise.all(
-        mesasRelacionadas.map((mesa) => {
-          return fetch("/api/pedido_mesas", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(mesa),
-          });
-        })
-      );
-
-      if (!responesMesas.every((response) => response.ok)) {
-        throw new Error("Error al relacionar el pedido con las mesas");
-      }
-
-      // Actualizamos el estado de las mesas
-      // Aquí deberíamos hacer una petición para actualizar el estado de las mesas
-      const mesasActualizadas = mesas.map((mesa) => ({
-        ...mesa,
-        Estado: "Ocupada",
-      }));
-
-      // Usamos Promise.all para hacer todas las peticiones en paralelo
-      const mesasUpdatePromise = await Promise.all(
-        mesasActualizadas.map((mesa) => {
-          return fetch(`/api/mesas/${mesa.MesaID}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(mesa),
-          });
-        })
-      );
-
-      setOrderItems([]);
-
-      router.push("/empleado");
-
-      alert("Pedido realizado correctamente");
+      setOrderItems([]); // Limpia el carrito después de agregar
     } catch (error) {
-      console.error(error);
-      alert("Ocurrió un error al realizar el pedido");
+      console.error("Error al agregar los platos:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="w-[400px] sm:w-[550px] md:w-[600px] lg:w-[900px]  min-h-screen bg-gray-100 p-2">
-      <div className="mx-auto max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden">
-        <header className="bg-primary text-primary-foreground p-6">
-          <h1 className="text-3xl font-bold">
-            Nuevo Pedido - Mesa(s) {mesas.map((mesa) => mesa.MesaID).join(", ")}
-          </h1>
-        </header>
-        <div className="flex flex-col md:flex-row p-2 gap-8">
-          <div className="w-full md:w-1/2 space-y-6">
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <Plus className="w-4 h-4 mr-2" />
+          Agregar plato
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] max-w-[400px] sm:max-w-[600px] md:max-w-[700px] lg:max-w-[1000px]">
+        <DialogHeader>
+          <DialogTitle>Agregar plato</DialogTitle>
+          <DialogDescription>
+            Añade platos a la mesa, recuerda que puedes modificar la cantidad de
+            cada plato en la mesa.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col lg:flex-row p-2 gap-8 max-w-[80vw]">
+          <div className="w-full space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Menú</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="max-h-[55vh] overflow-y-auto">
                 <div className="flex items-center space-x-2 mb-4">
                   <Search className="w-5 h-5 text-gray-500" />
                   <Input
@@ -309,12 +242,12 @@ export default function MesaLibre({ mesas }: MesaProps) {
               </CardContent>
             </Card>
           </div>
-          <div className="w-full md:w-1/2 space-y-6">
+          <div className="w-full md:w-1/2 space-y-6 min-w-[30vw] overflow-auto">
             <Card>
               <CardHeader>
                 <CardTitle>Resumen del Pedido</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="max-h-[55vh] overflow-y-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -352,24 +285,16 @@ export default function MesaLibre({ mesas }: MesaProps) {
                     ))}
                   </TableBody>
                 </Table>
-                <div className="mt-4 flex justify-between items-center">
-                  <span className="text-xl font-semibold">
-                    Total: S/. {total.toFixed(2)}
-                  </span>
-                </div>
               </CardContent>
             </Card>
-            <Button
-              onClick={handleRealizarPedido}
-              className="w-full"
-              size="lg"
-              disabled={orderItems.length === 0}
-            >
-              <ShoppingCart className="w-5 h-5 mr-2" /> Realizar Pedido
-            </Button>
           </div>
         </div>
-      </div>
-    </div>
+        <DialogFooter>
+          <Button onClick={handleAddPlatos} disabled={isLoading}>
+            Agregar platos
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
-}
+};

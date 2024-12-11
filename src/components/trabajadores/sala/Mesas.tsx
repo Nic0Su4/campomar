@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 export const Mesas = () => {
   const router = useRouter();
   const [mesas, setMesas] = useState<mesas[]>([]);
-  const [selectedTables, setSelectedTables] = useState<number[]>([]);
+  const [selectedTables, setSelectedTables] = useState<mesas[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -38,17 +38,32 @@ export const Mesas = () => {
     fetchMesas();
   }, []); // Solo se ejecuta al montar el componente
 
-  const handleSelectTable = (table: number) => {
+  const handleSelectTable = (table: mesas) => {
     setSelectedTables((prev: any) =>
       prev.includes(table)
-        ? prev.filter((t: number) => t !== table)
+        ? prev.filter((t: mesas) => t.MesaID !== table.MesaID)
         : [...prev, table]
     );
   };
 
   const hadleGoToTable = () => {
     setIsLoading(true);
-    const selectedTablesQuery = selectedTables.join(",");
+
+    if (selectedTables.length === 0) {
+      setIsLoading(false);
+      return;
+    }
+
+    if (selectedTables.some((table) => table.Estado === "Ocupada")) {
+      alert("Al menos una mesa seleccionada está ocupada");
+      setIsLoading(false);
+      return;
+    }
+
+    const selectedTablesQuery = selectedTables
+      .map((table) => table.MesaID)
+      .join(",");
+
     router.push(`/empleado/sala/mesa?mesas=${selectedTablesQuery}`);
   };
 
@@ -62,17 +77,60 @@ export const Mesas = () => {
           {mesas.map((mesa) => (
             <Button
               key={mesa.MesaID}
-              onClick={() => handleSelectTable(mesa.MesaID)}
-              variant={
-                selectedTables.includes(mesa.MesaID) ? "default" : "outline"
+              onClick={
+                mesa.Estado == "Libre"
+                  ? () => handleSelectTable(mesa)
+                  : async () => {
+                      setIsLoading(true);
+                      try {
+                        const response = await fetch(
+                          `/api/mesas/relacion?mesaId=${mesa.MesaID}`,
+                          {
+                            method: "GET",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                          }
+                        );
+
+                        if (!response.ok) {
+                          alert("Error al obtener la mesa");
+                          setIsLoading(false);
+                          return;
+                        }
+
+                        const data = await response.json();
+
+                        const mesasRelacionadas = data.map(
+                          (mesa: mesas) => mesa.MesaID
+                        );
+
+                        router.push(
+                          `/empleado/sala/mesa?mesas=${mesasRelacionadas.join(
+                            ","
+                          )}`
+                        );
+                      } catch (error) {
+                        console.error(error);
+                      }
+                    }
               }
+              variant={selectedTables.includes(mesa) ? "default" : "outline"}
               className={`${
-                selectedTables.includes(mesa.MesaID)
+                selectedTables.includes(mesa)
                   ? "bg-brandPrimary hover:bg-brandSecondary"
+                  : ""
+              } ${
+                mesa.Estado === "Ocupada"
+                  ? "bg-red-500 text-white hover:bg-red-600 hover:text-white"
                   : ""
               }`}
             >
-              Mesa {mesa.MesaID}
+              {isLoading ? (
+                <Spinner size="small" className="mr-2 text-white" />
+              ) : (
+                `Mesa ${mesa.NumeroMesa}`
+              )}
             </Button>
           ))}
         </div>
@@ -80,8 +138,8 @@ export const Mesas = () => {
           <div>
             Mesas seleccionadas:
             {selectedTables.map((table) => (
-              <Badge key={table} variant="secondary" className="ml-2">
-                {table}
+              <Badge key={table.MesaID} variant="secondary" className="ml-2">
+                {table.NumeroMesa}
               </Badge>
             ))}
           </div>

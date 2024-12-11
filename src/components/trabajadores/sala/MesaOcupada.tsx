@@ -11,62 +11,314 @@ import {
 } from "@/components/ui/table";
 import { useEmpleadoStore } from "@/store/empleado";
 import { empleados, mesas } from "@prisma/client";
-import { Clock, Edit, Plus, X } from "lucide-react";
+import { X, PlusIcon, MinusIcon, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { MesaOcupadaAgregar } from "./Modal/MesaOcupadaAgregar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const MesaOcupada = () => {
   const empleado: empleados = useEmpleadoStore((state: any) => state.empleado);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const mesasParam = searchParams.get("mesas");
 
-  const [selectedTables, setSelectedTables] = useState<number[]>([]);
+  const [selectedTables, setSelectedTables] = useState<mesas[]>([]);
+  const [pedido, setPedido] = useState<any | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [tipoPago, setTipoPago] = useState<number | null>(null);
+
+  // Llamada a la API para obtener el pedido relacionado con esas mesas
+  const fetchPedido = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(`/api/pedido_mesas?mesas=${mesasParam}`);
+      if (!response.ok) {
+        throw new Error("Error al obtener el pedido");
+      }
+
+      const data = await response.json();
+      if (!data || !data.detalles || data.detalles.length === 0) {
+        setPedido(null); // No hay pedido activo
+      } else {
+        setPedido(data); // Pedido encontrado
+      }
+    } catch (error) {
+      console.error(error);
+      setError("Error al obtener el pedido. Inténtalo de nuevo más tarde.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [mesasParam]);
 
   useEffect(() => {
-    const mesasParam = searchParams.get("mesas");
     if (mesasParam) {
-      const mesasArray = mesasParam.split(",").map(Number); // Convertir la cadena a un array de números
-      setSelectedTables(mesasArray);
+      const mesasArray = mesasParam.split(",").map(Number);
+      const fetchMesas = async () => {
+        const promises = mesasArray.map((mesaId) =>
+          fetch(`/api/mesas/${mesaId}`).then((res) => res.json())
+        );
+
+        const mesas = await Promise.all(promises);
+        setSelectedTables(mesas);
+      };
+
+      fetchPedido();
+      fetchMesas();
     }
-  }, [searchParams]);
+  }, [fetchPedido, mesasParam]);
+
+  const calcularTotal = (detalles: any[]) => {
+    return detalles.reduce(
+      (acc: number, detalle: any) =>
+        acc + detalle.Cantidad * detalle.PrecioUnitario,
+      0
+    );
+  };
+
+  const addPlatoToPedido = async (platoId: number, cantidad: number) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/detallepedidos`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          PedidoID: pedido.PedidoID,
+          PlatoID: platoId,
+          Cantidad: cantidad,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al agregar el plato al pedido");
+      }
+
+      await fetchPedido();
+    } catch (error) {
+      console.error(error);
+      setError(
+        "Error al agregar el plato al pedido. Inténtalo de nuevo más tarde."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleIncrementarCantidad = async (detalleId: number) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/detallepedidos/${detalleId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          operacion: "incrementar",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al incrementar la cantidad del plato");
+      }
+
+      const data = await response.json();
+      setPedido((prevPedido: any) => {
+        const detallesActualizados = prevPedido.detalles.map((detalle: any) =>
+          detalle.DetalleID === detalleId
+            ? {
+                ...detalle,
+                Cantidad: detalle.Cantidad + 1,
+              }
+            : detalle
+        );
+        return {
+          ...prevPedido,
+          detalles: detallesActualizados,
+          total: calcularTotal(detallesActualizados),
+        };
+      });
+    } catch (error) {
+      console.error(error);
+      setError(
+        "Error al incrementar la cantidad del plato. Inténtalo de nuevo más tarde."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDecrementarCantidad = async (detalleId: number) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/detallepedidos/${detalleId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          operacion: "decrementar",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al decrementar la cantidad del plato");
+      }
+
+      setPedido((prevPedido: any) => {
+        const detallesActualizados = prevPedido.detalles.map((detalle: any) =>
+          detalle.DetalleID === detalleId
+            ? { ...detalle, Cantidad: Math.max(detalle.Cantidad - 1, 1) }
+            : detalle
+        );
+        return {
+          ...prevPedido,
+          detalles: detallesActualizados,
+          total: calcularTotal(detallesActualizados),
+        };
+      });
+    } catch (error) {
+      console.error(error);
+      setError(
+        "Error al decrementar la cantidad del plato. Inténtalo de nuevo más tarde."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEliminarPlato = async (detalleId: number) => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/detallepedidos/${detalleId}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al eliminar el plato del pedido");
+      }
+
+      setPedido((prevPedido: any) => {
+        const detallesActualizados = prevPedido.detalles.filter(
+          (detalle: any) => detalle.DetalleID !== detalleId
+        );
+        return {
+          ...prevPedido,
+          detalles: detallesActualizados,
+          total: calcularTotal(detallesActualizados),
+        };
+      });
+    } catch (error) {
+      console.error(error);
+      setError(
+        "Error al eliminar el plato del pedido. Inténtalo de nuevo más tarde."
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleGoBack = () => {
     router.back();
   };
 
+  const handleEliminarPedido = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/pedidos/${pedido.PedidoID}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al eliminar el pedido");
+      }
+
+      setPedido(null);
+      router.back();
+    } catch (error) {
+      console.error(error);
+      setError("Error al eliminar el pedido. Inténtalo de nuevo más tarde.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePagarPedido = async () => {
+    if (!pedido || !tipoPago) {
+      alert("Selecciona un tipo de pago");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch(`/api/pedidos/${pedido.PedidoID}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ...pedido,
+          Estado: 0,
+          Fecha: new Date(),
+          TipoPago: tipoPago,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Error al pagar el pedido");
+      }
+
+      router.push("/empleado/sala");
+    } catch (error) {
+      console.error(error);
+      setError("Error al pagar el pedido. Inténtalo de nuevo más tarde.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
-    <div className="min-h-[600px] px-8 lg:px-0">
+    <div className="min-h-[600px] max-w-[400px] sm:max-w-[550px] md:max-w-[600px] lg:max-w-[900px] lg:px-0">
       <div className="mx-auto max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden">
         <header className="bg-brandSecondary text-primary-foreground p-6">
-          <h1 className="text-3xl font-bold">Realizar pedido</h1>
+          <h1 className="text-3xl font-bold">Modificar pedido</h1>
         </header>
         <div className="flex flex-col md:flex-row p-6 gap-8">
           <div className="w-full md:w-1/3 space-y-6">
             <div className="bg-secondary p-6 rounded-lg">
               <h2 className="text-2xl font-semibold mb-4">
-                Mesa(s) {selectedTables.join(", ")}
+                Mesa(s){" "}
+                {selectedTables.map((mesa) => mesa.NumeroMesa).join(", ")}
               </h2>
               <div className="flex justify-between items-center">
                 <span className="bg-red-100 text-red-800 text-sm font-medium px-2.5 py-0.5 rounded">
                   Ocupado
                 </span>
               </div>
-              <div className="mt-4 flex items-center text-muted-foreground">
-                <Clock className="w-5 h-5 mr-2" />
-                <span>Tiempo: 1:30:20</span>
-              </div>
               <div className="mt-2 text-muted-foreground">
                 Moz@: {empleado.Nombre}
               </div>
             </div>
             <div className="flex flex-col gap-4">
-              <Button className="w-full">
-                <Plus className="w-4 h-4 mr-2" /> Agregar
-              </Button>
-              <Button variant="outline" className="w-full">
-                <Edit className="w-4 h-4 mr-2" /> Modificar
-              </Button>
-              <Button variant="destructive" className="w-full">
+              <MesaOcupadaAgregar
+                addPlatoToPedido={addPlatoToPedido}
+                pedido={pedido}
+              />
+              <Button
+                variant="destructive"
+                className="w-full"
+                onClick={handleEliminarPedido}
+              >
                 <X className="w-4 h-4 mr-2" /> Cancelar Pedido
               </Button>
             </div>
@@ -76,30 +328,99 @@ export const MesaOcupada = () => {
           </div>
           <div className="w-full md:w-2/3 space-y-6">
             <h2 className="text-2xl font-semibold">Pedido:</h2>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Código</TableHead>
-                  <TableHead>Plato</TableHead>
-                  <TableHead>Cant.</TableHead>
-                  <TableHead>Precio U.</TableHead>
-                  <TableHead>Precio T.</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                <TableRow>
-                  <TableCell>001</TableCell>
-                  <TableCell>Caldo de Gallina</TableCell>
-                  <TableCell>2</TableCell>
-                  <TableCell>S/. 12.00</TableCell>
-                  <TableCell>S/. 24.00</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-            <div className="flex justify-between items-center">
-              <span className="text-xl font-semibold">Total: S/. 24.00</span>
-              <Button size="lg">Pagar</Button>
-            </div>
+
+            {isLoading ? (
+              <p>Cargando pedido...</p>
+            ) : error ? (
+              <p className="text-red-500">{error}</p>
+            ) : pedido ? (
+              <>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Plato</TableHead>
+                      <TableHead>Cant.</TableHead>
+                      <TableHead>Precio U.</TableHead>
+                      <TableHead>Precio T.</TableHead>
+                      <TableHead>Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pedido.detalles.map((detalle: any) => (
+                      <TableRow key={detalle.PlatoID}>
+                        <TableCell>{detalle.descripcionPlato}</TableCell>
+                        <TableCell>{detalle.Cantidad}</TableCell>
+                        <TableCell>
+                          S/. {Number(detalle.PrecioUnitario).toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          S/.{" "}
+                          {(detalle.Cantidad * detalle.PrecioUnitario).toFixed(
+                            2
+                          )}
+                        </TableCell>
+                        <TableCell className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleDecrementarCantidad(detalle.DetalleID)
+                            }
+                          >
+                            <MinusIcon size={16} />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              handleIncrementarCantidad(detalle.DetalleID)
+                            }
+                          >
+                            <PlusIcon size={16} />
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() =>
+                              handleEliminarPlato(detalle.DetalleID)
+                            }
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+                <div className="flex justify-between items-center">
+                  <span className="text-xl font-semibold">
+                    Total: S/. {pedido.total.toFixed(2)}
+                  </span>
+                  <Select
+                    onValueChange={(value) => setTipoPago(Number(value))}
+                    value={tipoPago?.toString() || ""}
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Pago" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Efectivo</SelectItem>
+                      <SelectItem value="2">Yape</SelectItem>
+                      <SelectItem value="3">POS</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    size="lg"
+                    onClick={handlePagarPedido}
+                    disabled={tipoPago === null || isLoading}
+                  >
+                    Pagar
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <p>No se encontró ningún pedido activo para estas mesas.</p>
+            )}
           </div>
         </div>
       </div>

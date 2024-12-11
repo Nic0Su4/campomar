@@ -50,7 +50,7 @@ const EmpleadoPage = () => {
       <CardEmpleado
         texto="Pedidos"
         icono={<HandPlatter size={60} />}
-        direccion="/empleado/mis-datos"
+        direccion="/empleado/pedidos"
       />
     </div>
   );

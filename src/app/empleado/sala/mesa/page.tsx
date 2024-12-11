@@ -52,7 +52,11 @@ const MesaPage = () => {
 
   const allTablesAreFree = mesas.every((table) => table.Estado === "Libre");
 
-  return <div>{allTablesAreFree ? <MesaLibre /> : <MesaOcupada />}</div>;
+  return (
+    <div>
+      {allTablesAreFree ? <MesaLibre mesas={mesas} /> : <MesaOcupada />}
+    </div>
+  );
 };
 
 export default MesaPage;

@@ -31,24 +31,30 @@ model empleados {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model pedidos {
-  PedidoID    Int        @id @default(autoincrement())
-  EmpleadoID  Int?
-  PlatoID     Int?
-  Cantidad    Int?
-  PrecioTotal Decimal?   @db.Decimal(10, 2)
-  mesas       mesas[]
-  empleados   empleados? @relation(fields: [EmpleadoID], references: [EmpleadoID], onDelete: NoAction, onUpdate: NoAction, map: "pedidos_ibfk_1")
-  platos      platos?    @relation(fields: [PlatoID], references: [PlatoID], onDelete: NoAction, onUpdate: NoAction, map: "pedidos_ibfk_2")
+  PedidoID       Int              @id @default(autoincrement())
+  EmpleadoID     Int
+  Fecha          DateTime         @db.DateTime(0)
+  Total          Decimal          @db.Decimal(10, 2)
+  Estado         Boolean          @default(dbgenerated("b'1'")) @db.Bit(1)
+  TipoPago       Int?
+  detallepedidos detallepedidos[]
+  pedido_mesas   pedido_mesas[]
+  empleados      empleados        @relation(fields: [EmpleadoID], references: [EmpleadoID], onDelete: NoAction, onUpdate: NoAction, map: "pedidos_ibfk_1")
+  tipopago       tipopago?        @relation(fields: [TipoPago], references: [TipoPagoID], onDelete: NoAction, onUpdate: NoAction, map: "Fk_TipoPago")
 
-  @@index([EmpleadoID], map: "idx_EmpleadoID")
-  @@index([PlatoID], map: "idx_PlatoID")
+  @@index([EmpleadoID], map: "FK_EmpleadoPedido")
+  @@index([TipoPago], map: "Fk_TipoPago_idx")
 }
 
 model platos {
-  PlatoID     Int       @id @default(autoincrement())
-  Descripcion String?   @db.VarChar(255)
-  Precio      Decimal?  @db.Decimal(10, 2)
-  pedidos     pedidos[]
+  PlatoID        Int              @id @default(autoincrement())
+  Descripcion    String?          @db.VarChar(255)
+  Precio         Decimal?         @db.Decimal(10, 2)
+  CategoriaID    Int
+  detallepedidos detallepedidos[]
+  categorias     categorias       @relation(fields: [CategoriaID], references: [CategoriaID], onDelete: NoAction, onUpdate: NoAction, map: "FK_CategoriaID")
+
+  @@index([CategoriaID], map: "FK_CategoriaID_idx")
 }
 
 model tipoempleado {
@@ -58,11 +64,43 @@ model tipoempleado {
 }
 
 model mesas {
-  MesaID     Int      @id @default(autoincrement())
-  NumeroMesa Int
-  Estado     String   @default("Libre") @db.VarChar(10)
-  PedidoID   Int?
-  pedidos    pedidos? @relation(fields: [PedidoID], references: [PedidoID], onUpdate: NoAction, map: "fk_pedido")
+  MesaID       Int            @id @default(autoincrement())
+  NumeroMesa   Int
+  Estado       String         @default("Libre") @db.VarChar(10)
+  pedido_mesas pedido_mesas[]
+}
 
-  @@index([PedidoID], map: "fk_pedido")
+model detallepedidos {
+  DetalleID Int     @id @default(autoincrement())
+  PedidoID  Int
+  PlatoID   Int
+  Cantidad  Int
+  pedidos   pedidos @relation(fields: [PedidoID], references: [PedidoID], onDelete: NoAction, onUpdate: NoAction, map: "FK_PedidoDetalle")
+  platos    platos  @relation(fields: [PlatoID], references: [PlatoID], onDelete: NoAction, onUpdate: NoAction, map: "FK_PlatoDetalle")
+
+  @@index([PedidoID], map: "FK_PedidoDetalle")
+  @@index([PlatoID], map: "FK_PlatoDetalle")
+}
+
+model categorias {
+  CategoriaID Int      @id @default(autoincrement())
+  Descripcion String   @db.VarChar(255)
+  platos      platos[]
+}
+
+model pedido_mesas {
+  PedidoMesaID Int      @id @default(autoincrement())
+  PedidoID     Int?
+  MesaID       Int?
+  pedidos      pedidos? @relation(fields: [PedidoID], references: [PedidoID], onDelete: NoAction, onUpdate: NoAction, map: "pedido_mesas_ibfk_1")
+  mesas        mesas?   @relation(fields: [MesaID], references: [MesaID], onDelete: NoAction, onUpdate: NoAction, map: "pedido_mesas_ibfk_2")
+
+  @@index([MesaID], map: "MesaID")
+  @@index([PedidoID], map: "PedidoID")
+}
+
+model tipopago {
+  TipoPagoID  Int       @id @default(autoincrement())
+  Descripcion String?   @db.VarChar(45)
+  pedidos     pedidos[]
 }
