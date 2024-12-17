@@ -15,25 +15,35 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Spinner } from "../ui/spinner";
-import { fetchEarnings, fetchTopSellingDishes } from "@/utils/dashboardUtils";
+import {
+  fetchEarnings,
+  fetchTopSellingDishes,
+  fetchSalesByEmployee,
+} from "@/utils/dashboardUtils";
 
+// Agrega nuevos estados para las ventas por empleado
 export const DashboardSummary = () => {
   const [earnings, setEarnings] = useState<number>(0);
+  const [earningsByPaymentType, setEarningsByPaymentType] = useState<{
+    efectivo: number;
+    yape: number;
+    pos: number;
+  }>({ efectivo: 0, yape: 0, pos: 0 }); // Estado para ganancias por tipo de pago
   const [topDishes, setTopDishes] = useState<
     { dish: string; totalSold: number }[]
   >([]);
+  const [salesByEmployee, setSalesByEmployee] = useState<
+    { empleado: string; totalSold: number }[]
+  >([]); // Estado para ventas por empleado
   const [loading, setLoading] = useState<boolean>(false);
   const [dateRange, setDateRange] = useState<{
     startDate?: string;
     endDate?: string;
   }>({});
 
-  // New state to track which predefined range is selected
   const [selectedPredefinedRange, setSelectedPredefinedRange] = useState<
     number | null
   >(null);
-
-  // New state for custom date selection
   const [customDateMode, setCustomDateMode] = useState<boolean>(false);
 
   const fetchData = useCallback(async () => {
@@ -41,17 +51,29 @@ export const DashboardSummary = () => {
 
     setLoading(true);
     try {
+      // Llama a la API para obtener las ganancias totales y las ganancias por tipo de pago
       const earningsData = await fetchEarnings(
         dateRange.startDate,
         dateRange.endDate
       );
+
+      // Llama a la API para obtener los platos más vendidos
       const topDishesData = await fetchTopSellingDishes(
         dateRange.startDate,
         dateRange.endDate
       );
 
-      setEarnings(earningsData);
+      // Llama a la API para obtener las ventas por empleado
+      const salesByEmployeeData = await fetchSalesByEmployee(
+        dateRange.startDate,
+        dateRange.endDate
+      );
+
+      // Ahora `earningsData` tiene la estructura esperada
+      setEarnings(earningsData.earnings); // Ganancias totales
+      setEarningsByPaymentType(earningsData.earningsByPaymentType); // Ganancias por tipo de pago
       setTopDishes(topDishesData);
+      setSalesByEmployee(salesByEmployeeData);
     } catch (error) {
       console.error("Error al cargar los datos del dashboard", error);
     } finally {
@@ -75,7 +97,6 @@ export const DashboardSummary = () => {
       endDate,
     });
 
-    // Reset custom date mode and set selected predefined range
     setCustomDateMode(false);
     setSelectedPredefinedRange(days);
   };
@@ -90,7 +111,6 @@ export const DashboardSummary = () => {
       endDate: endDate.toISOString().split("T")[0],
     });
 
-    // Reset custom date mode and set selected predefined range
     setCustomDateMode(false);
     setSelectedPredefinedRange(365);
   };
@@ -103,13 +123,11 @@ export const DashboardSummary = () => {
   };
 
   const handleCustomSearch = () => {
-    // Only proceed if both dates are selected and start date is before end date
     if (
       dateRange.startDate &&
       dateRange.endDate &&
       new Date(dateRange.startDate) <= new Date(dateRange.endDate)
     ) {
-      // Reset predefined range selection
       setSelectedPredefinedRange(null);
       fetchData();
     }
@@ -201,6 +219,7 @@ export const DashboardSummary = () => {
               </div>
             </div>
           </div>
+
           <div className="mb-6">
             <Label>Ganancias Totales</Label>
             {loading ? (
@@ -211,8 +230,45 @@ export const DashboardSummary = () => {
               </p>
             )}
           </div>
-          <div>
-            <Label>Platos Más Vendidos</Label>
+
+          <div className="mb-6">
+            <Label>Ganancias por Tipo de Pago</Label>
+            {loading ? (
+              <Spinner />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tipo de Pago</TableHead>
+                    <TableHead>Ganancias</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>Efectivo</TableCell>
+                    <TableCell>
+                      S/. {earningsByPaymentType.efectivo.toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Yape</TableCell>
+                    <TableCell>
+                      S/. {earningsByPaymentType.yape.toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>POS</TableCell>
+                    <TableCell>
+                      S/. {earningsByPaymentType.pos.toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            )}
+          </div>
+
+          <div className="mb-6">
+            <Label>Platos más vendidos</Label>
             {loading ? (
               <Spinner />
             ) : (
@@ -228,6 +284,30 @@ export const DashboardSummary = () => {
                     <TableRow key={index}>
                       <TableCell>{dish.dish}</TableCell>
                       <TableCell>{dish.totalSold}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+
+          <div className="mb-6">
+            <Label>Ventas por Empleado</Label>
+            {loading ? (
+              <Spinner />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Empleado</TableHead>
+                    <TableHead>Total Vendido</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {salesByEmployee.map((employee, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{employee.empleado}</TableCell>
+                      <TableCell>S/. {employee.totalSold.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
