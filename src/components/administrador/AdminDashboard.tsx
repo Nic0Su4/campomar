@@ -15,14 +15,26 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Spinner } from "../ui/spinner";
-import { fetchEarnings, fetchTopSellingDishes } from "@/utils/dashboardUtils";
+import {
+  fetchEarnings,
+  fetchSalesByEmployee,
+  fetchTopSellingDishes,
+} from "@/utils/dashboardUtils";
 
 // Agrega nuevos estados para las ventas por empleado
 export const DashboardSummary = () => {
   const [earnings, setEarnings] = useState<number>(0);
+  const [earningsByPaymentType, setEarningsByPaymentType] = useState<{
+    efectivo: number;
+    yape: number;
+    pos: number;
+  }>({ efectivo: 0, yape: 0, pos: 0 }); // Estado para ganancias por tipo de pago
   const [topDishes, setTopDishes] = useState<
     { dish: string; totalSold: number }[]
   >([]);
+  const [salesByEmployee, setSalesByEmployee] = useState<
+    { empleado: string; totalSold: number }[]
+  >([]); // Estado para ventas por empleado
   const [loading, setLoading] = useState<boolean>(false);
   const [dateRange, setDateRange] = useState<{
     startDate?: string;
@@ -55,7 +67,8 @@ export const DashboardSummary = () => {
         dateRange.endDate
       );
 
-      setEarnings(earningsData);
+      setEarnings(earningsData.earnings);
+      setEarningsByPaymentType(earningsData.earningsByPaymentType);
       setTopDishes(topDishesData);
       setSalesByEmployee(salesByEmployeeData);
     } catch (error) {
@@ -100,7 +113,10 @@ export const DashboardSummary = () => {
   };
 
   const handleDateChange = (key: "startDate" | "endDate", value: string) => {
-    setDateRange((prev) => ({ ...prev, [key]: value }));
+    setDateRange((prev) => {
+      const updatedRange = { ...prev, [key]: value };
+      return updatedRange;
+    });
   };
 
   const handleCustomSearch = () => {
@@ -118,12 +134,16 @@ export const DashboardSummary = () => {
     <TabsContent value="dashboard-summary">
       <Card className="border-t-2 border-[#00631b]">
         <CardHeader>
-          <CardTitle className="text-gray-800 border-b-2 border-[#00631b] inline-block pb-1">Resumen del Dashboard</CardTitle>
+          <CardTitle className="text-gray-800 border-b-2 border-[#00631b] inline-block pb-1">
+            Resumen del Dashboard
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4 mb-6">
             <div>
-              <Label className="text-gray-600 font-medium">Rango de Fechas</Label>
+              <Label className="text-gray-600 font-medium">
+                Rango de Fechas
+              </Label>
               <div className="flex flex-wrap gap-2">
                 {[
                   { days: 1, label: "Hoy" },
@@ -133,9 +153,19 @@ export const DashboardSummary = () => {
                 ].map(({ days, label }) => (
                   <Button
                     key={days}
-                    onClick={() => days === 365 ? setFullYearRange() : setPredefinedRange(days)}
-                    variant={selectedPredefinedRange === days ? "default" : "outline"}
-                    className={selectedPredefinedRange === days ? "bg-[#00631b] text-white hover:bg-[#00631b]/90" : "hover:border-[#00631b]"}
+                    onClick={() =>
+                      days === 365
+                        ? setFullYearRange()
+                        : setPredefinedRange(days)
+                    }
+                    variant={
+                      selectedPredefinedRange === days ? "default" : "outline"
+                    }
+                    className={
+                      selectedPredefinedRange === days
+                        ? "bg-[#00631b] text-white hover:bg-[#00631b]/90"
+                        : "hover:border-[#00631b]"
+                    }
                   >
                     {label}
                   </Button>
@@ -144,7 +174,7 @@ export const DashboardSummary = () => {
             </div>
             <div>
               <Label className="text-gray-600 font-medium">Personalizado</Label>
-              <div className="flex gap-2 items-end">
+              <div className="flex flex-wrap gap-2 items-end">
                 <div>
                   <Label htmlFor="startDate">Fecha de Inicio</Label>
                   <Input
@@ -179,7 +209,11 @@ export const DashboardSummary = () => {
                   onClick={handleCustomSearch}
                   disabled={!dateRange.startDate || !dateRange.endDate}
                   variant={customDateMode ? "default" : "outline"}
-                  className={customDateMode ? "bg-gray-800 hover:bg-gray-700" : "hover:bg-gray-100"}
+                  className={
+                    customDateMode
+                      ? "bg-gray-800 hover:bg-gray-700"
+                      : "hover:bg-gray-100"
+                  }
                 >
                   Buscar
                 </Button>
@@ -187,7 +221,7 @@ export const DashboardSummary = () => {
             </div>
           </div>
           <div className="mb-6">
-            <Label>Ganancias Totales</Label>
+            <Label className="font-bold">Ganancias Totales</Label>
             {loading ? (
               <Spinner className="text-gray-600" />
             ) : (
@@ -196,23 +230,91 @@ export const DashboardSummary = () => {
               </p>
             )}
           </div>
+
+          <div className="mb-6">
+            <Label className="font-bold">Ganancias por Tipo de Pago</Label>
+            {loading ? (
+              <Spinner />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Tipo de Pago</TableHead>
+                    <TableHead>Ganancias</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell>Efectivo</TableCell>
+                    <TableCell>
+                      S/. {earningsByPaymentType.efectivo.toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>Yape</TableCell>
+                    <TableCell>
+                      S/. {earningsByPaymentType.yape.toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell>POS</TableCell>
+                    <TableCell>
+                      S/. {earningsByPaymentType.pos.toFixed(2)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            )}
+          </div>
+
           <div>
-            <Label>Platos Más Vendidos</Label>
+            <Label className="font-bold">Platos Más Vendidos</Label>
             {loading ? (
               <Spinner className="text-gray-600" />
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-gray-600 border-b-2 border-[#00631b]">Plato</TableHead>
-                    <TableHead className="text-gray-600 border-b-2 border-[#00631b]">Total Vendido</TableHead>
+                    <TableHead className="text-gray-600 border-b-2 border-[#00631b]">
+                      Plato
+                    </TableHead>
+                    <TableHead className="text-gray-600 border-b-2 border-[#00631b]">
+                      Total Vendido
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {topDishes.map((dish, index) => (
-                    <TableRow key={index} className="hover:bg-[#00631b]/5 transition-colors">
+                    <TableRow
+                      key={index}
+                      className="hover:bg-[#00631b]/5 transition-colors"
+                    >
                       <TableCell>{dish.dish}</TableCell>
                       <TableCell>{dish.totalSold}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </div>
+
+          <div className="mb-6">
+            <Label className="font-bold">Ventas por Empleado</Label>
+            {loading ? (
+              <Spinner />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Empleado</TableHead>
+                    <TableHead>Total Vendido</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {salesByEmployee.map((employee, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{employee.empleado}</TableCell>
+                      <TableCell>S/. {employee.totalSold.toFixed(2)}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -224,4 +326,3 @@ export const DashboardSummary = () => {
     </TabsContent>
   );
 };
-

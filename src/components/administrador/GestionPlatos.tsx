@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Edit, PlusCircle, Trash2, Search } from 'lucide-react';
+import { Edit, PlusCircle, Trash2, Search } from "lucide-react";
 import { platos } from "@prisma/client";
 import { Spinner } from "../ui/spinner";
 import {
@@ -65,7 +65,11 @@ export const GestionPlatos = () => {
   };
 
   const handleEditDish = async () => {
-    if (editingDish?.Descripcion && editingDish?.Precio && editingDish?.CategoriaID) {
+    if (
+      editingDish?.Descripcion &&
+      editingDish?.Precio &&
+      editingDish?.CategoriaID
+    ) {
       setLoadingDishes(true);
       try {
         const response = await fetch(`/api/platos/${editingDish.PlatoID}`, {
@@ -75,9 +79,11 @@ export const GestionPlatos = () => {
         });
         if (!response.ok) throw new Error("Error al editar el plato");
         const updatedPlato = await response.json();
-        setDishes(prevDishes => prevDishes.map(dish => 
-          dish.PlatoID === updatedPlato.PlatoID ? updatedPlato : dish
-        ));
+        setDishes((prevDishes) =>
+          prevDishes.map((dish) =>
+            dish.PlatoID === updatedPlato.PlatoID ? updatedPlato : dish
+          )
+        );
         setEditingDish(null);
       } catch (error) {
         console.error(error);
@@ -89,9 +95,11 @@ export const GestionPlatos = () => {
 
   const handleDeleteDish = async (PlatoID: number) => {
     try {
-      const response = await fetch(`/api/platos/${PlatoID}`, { method: "DELETE" });
+      const response = await fetch(`/api/platos/${PlatoID}`, {
+        method: "DELETE",
+      });
       if (!response.ok) throw new Error("Error al eliminar el plato");
-      setDishes(dishes.filter(dish => dish.PlatoID !== PlatoID));
+      setDishes(dishes.filter((dish) => dish.PlatoID !== PlatoID));
     } catch (error) {
       console.error(error);
     }
@@ -99,7 +107,7 @@ export const GestionPlatos = () => {
 
   const handleSelectDish = (dish: platos) => setEditingDish(dish);
 
-  const filteredDishes = dishes.filter(dish =>
+  const filteredDishes = dishes.filter((dish) =>
     dish.Descripcion?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -114,37 +122,61 @@ export const GestionPlatos = () => {
     <TabsContent value="dishes">
       <Card className="border-t-2 border-gray-200">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-800">Gestión de Platos</CardTitle>
+          <CardTitle className="text-xl font-semibold text-gray-800">
+            Gestión de Platos
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
             <div>
-              <Label htmlFor="dishDescription" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="dishDescription"
+                className="text-sm font-medium text-gray-700"
+              >
                 {editingDish ? "Editar Descripción" : "Descripción"}
               </Label>
               <Input
                 id="dishDescription"
-                value={editingDish ? editingDish.Descripcion! : newDish.Descripcion!}
-                onChange={(e) => editingDish
-                  ? setEditingDish({ ...editingDish, Descripcion: e.target.value })
-                  : setNewDish({ ...newDish, Descripcion: e.target.value })
+                value={
+                  editingDish ? editingDish.Descripcion! : newDish.Descripcion!
+                }
+                onChange={(e) =>
+                  editingDish
+                    ? setEditingDish({
+                        ...editingDish,
+                        Descripcion: e.target.value,
+                      })
+                    : setNewDish({ ...newDish, Descripcion: e.target.value })
                 }
                 placeholder="Descripción del Plato"
                 className="mt-1 border-gray-300 focus:border-gray-400 focus:ring focus:ring-gray-200 focus:ring-opacity-50"
               />
             </div>
             <div>
-              <Label htmlFor="dishPrice" className="text-sm font-medium text-gray-700">
+              <Label
+                htmlFor="dishPrice"
+                className="text-sm font-medium text-gray-700"
+              >
                 {editingDish ? "Editar Precio" : "Precio"}
               </Label>
               <Input
                 id="dishPrice"
-                value={editingDish ? editingDish.Precio! : newDish.Precio!}
+                value={
+                  editingDish
+                    ? Number(editingDish.Precio)!
+                    : Number(newDish.Precio!)
+                }
                 onChange={(e) => {
                   const value = parseFloat(e.target.value);
                   editingDish
-                    ? setEditingDish({ ...editingDish, Precio: isNaN(value) ? 0 : value })
-                    : setNewDish({ ...newDish, Precio: isNaN(value) ? 0 : value });
+                    ? setEditingDish({
+                        ...editingDish,
+                        Precio: isNaN(value) ? 0 : value,
+                      })
+                    : setNewDish({
+                        ...newDish,
+                        Precio: isNaN(value) ? 0 : value,
+                      });
                 }}
                 placeholder="Precio"
                 type="number"
@@ -153,20 +185,38 @@ export const GestionPlatos = () => {
               />
             </div>
             <div>
-              <Label htmlFor="dishCategory" className="text-sm font-medium text-gray-700">Categoría</Label>
+              <Label
+                htmlFor="dishCategory"
+                className="text-sm font-medium text-gray-700"
+              >
+                Categoría
+              </Label>
               <Select
-                value={editingDish ? editingDish.CategoriaID?.toString() : newDish.CategoriaID?.toString()}
-                onValueChange={(value) => editingDish
-                  ? setEditingDish({ ...editingDish, CategoriaID: Number(value) })
-                  : setNewDish({ ...newDish, CategoriaID: Number(value) })
+                value={
+                  editingDish
+                    ? editingDish.CategoriaID?.toString()
+                    : newDish.CategoriaID?.toString()
+                }
+                onValueChange={(value) =>
+                  editingDish
+                    ? setEditingDish({
+                        ...editingDish,
+                        CategoriaID: Number(value),
+                      })
+                    : setNewDish({ ...newDish, CategoriaID: Number(value) })
                 }
               >
-                <SelectTrigger id="dishCategory" className="mt-1 border-gray-300 focus:border-gray-400 focus:ring focus:ring-gray-200 focus:ring-opacity-50">
+                <SelectTrigger
+                  id="dishCategory"
+                  className="mt-1 border-gray-300 focus:border-gray-400 focus:ring focus:ring-gray-200 focus:ring-opacity-50"
+                >
                   <SelectValue placeholder="Seleccionar categoría" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categoryOptions.map(option => (
-                    <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                  {categoryOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -192,7 +242,12 @@ export const GestionPlatos = () => {
             </Button>
           </div>
           <div className="mb-6">
-            <Label htmlFor="searchDishes" className="text-sm font-medium text-gray-700">Buscar Platos</Label>
+            <Label
+              htmlFor="searchDishes"
+              className="text-sm font-medium text-gray-700"
+            >
+              Buscar Platos
+            </Label>
             <div className="mt-1 relative rounded-md shadow-sm">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-5 w-5 text-gray-400" />
@@ -209,14 +264,22 @@ export const GestionPlatos = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {filteredDishes.map((dish) => (
-              <Card key={dish.PlatoID} className="hover:shadow-md transition-shadow">
+              <Card
+                key={dish.PlatoID}
+                className="hover:shadow-md transition-shadow"
+              >
                 <CardContent className="p-4">
-                  <h3 className="text-lg font-semibold mb-2">{dish.Descripcion}</h3>
+                  <h3 className="text-lg font-semibold mb-2">
+                    {dish.Descripcion}
+                  </h3>
                   <p className="text-gray-600 mb-2">
-                    Precio: S/. {typeof dish.Precio === 'number' ? dish.Precio.toFixed(2) : '0.00'}
+                    Precio: S/. {Number(dish.Precio)!.toFixed(2)}
                   </p>
                   <p className="text-gray-600 mb-4">
-                    Categoría: {categoryOptions.find(cat => cat.value === dish.CategoriaID?.toString())?.label || 'Otro'}
+                    Categoría:{" "}
+                    {categoryOptions.find(
+                      (cat) => cat.value === dish.CategoriaID?.toString()
+                    )?.label || "Otro"}
                   </p>
                   <div className="flex justify-end space-x-2">
                     <Button
@@ -245,4 +308,3 @@ export const GestionPlatos = () => {
     </TabsContent>
   );
 };
-
