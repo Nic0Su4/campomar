@@ -1,7 +1,6 @@
 import { TableCell, TableRow } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Check, Table } from "lucide-react";
+import { Eye, Check } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -30,40 +29,52 @@ const OrderRow = ({
   onTipoPagoChange: (value: number | null) => void;
   tipoPago: number | null;
 }) => {
+  const getButtonColor = (tipoPago: number | null) => {
+    switch (tipoPago) {
+      case 1: return 'bg-[#00631b] hover:bg-[#00631b]/90';
+      case 2: return 'bg-[#931194] hover:bg-[#931194]/90';
+      case 3: return 'bg-[#f7762c] hover:bg-[#f7762c]/90';
+      default: return '';
+    }
+  };
+
   return (
     <TableRow>
-      <TableCell>{order.id}</TableCell>
+      <TableCell className="font-medium">{order.id}</TableCell>
       <TableCell>{order.table}</TableCell>
       <TableCell>{order.items}</TableCell>
-      <TableCell>S/. {Number(order.total).toFixed(2)}</TableCell>
-      <TableCell>{`${order.date} a las ${order.time}`}</TableCell>
-      <TableCell className="flex space-x-2">
-        <Button size="sm" variant="outline" onClick={onViewOrder}>
-          <Eye className="w-4 h-4 mr-2" />
-          Ver
-        </Button>
-        <Select onValueChange={(value) => onTipoPagoChange(Number(value))}>
-          <SelectTrigger>
-            <SelectValue placeholder="Pago" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="1">Efectivo</SelectItem>
-            <SelectItem value="2">Yape</SelectItem>
-            <SelectItem value="3">POS</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button
-          size="sm"
-          variant="destructive"
-          onClick={onFinishOrder}
-          disabled={tipoPago === null}
-        >
-          <Check className="w-4 h-4 mr-2" />
-          Finalizar
-        </Button>
+      <TableCell className="text-right">S/. {Number(order.total).toFixed(2)}</TableCell>
+      <TableCell className="hidden md:table-cell">{`${order.date} ${order.time}`}</TableCell>
+      <TableCell className="text-right">
+        <div className="flex justify-end items-center space-x-2">
+          <Button size="sm" variant="outline" onClick={onViewOrder}>
+            <Eye className="w-4 h-4" />
+            <span className="sr-only">Ver</span>
+          </Button>
+          <Select onValueChange={(value) => onTipoPagoChange(Number(value))}>
+            <SelectTrigger className="w-[100px]">
+              <SelectValue placeholder="Pago" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">Efectivo</SelectItem>
+              <SelectItem value="2">Yape</SelectItem>
+              <SelectItem value="3">POS</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            size="sm"
+            className={`${getButtonColor(tipoPago)}`}
+            onClick={onFinishOrder}
+            disabled={tipoPago === null}
+          >
+            <Check className="w-4 h-4" />
+            <span className="sr-only">Finalizar</span>
+          </Button>
+        </div>
       </TableCell>
     </TableRow>
   );
 };
 
 export default OrderRow;
+

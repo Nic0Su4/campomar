@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { useEmpleadoStore } from "@/store/empleado";
 import { empleados, mesas } from "@prisma/client";
-import { X, PlusIcon, MinusIcon, Trash2 } from "lucide-react";
+import { X, PlusIcon, MinusIcon, Trash2 } from 'lucide-react';
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { MesaOcupadaAgregar } from "./Modal/MesaOcupadaAgregar";
@@ -288,14 +288,14 @@ export const MesaOcupada = () => {
   };
 
   return (
-    <div className="min-h-[600px] max-w-[400px] sm:max-w-[550px] md:max-w-[600px] lg:max-w-[900px] lg:px-0">
-      <div className="mx-auto max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden">
+    <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="bg-white rounded-lg shadow-lg overflow-hidden">
         <header className="bg-brandSecondary text-primary-foreground p-6">
           <h1 className="text-3xl font-bold">Modificar pedido</h1>
         </header>
-        <div className="flex flex-col md:flex-row p-6 gap-8">
-          <div className="w-full md:w-1/3 space-y-6">
-            <div className="bg-secondary p-6 rounded-lg">
+        <div className="flex flex-col lg:flex-row p-6 gap-8">
+          <div className="w-full lg:w-1/3 space-y-6">
+            <div className="bg-secondary p-6 rounded-lg shadow-md">
               <h2 className="text-2xl font-semibold mb-4">
                 Mesa(s){" "}
                 {selectedTables.map((mesa) => mesa.NumeroMesa).join(", ")}
@@ -316,110 +316,122 @@ export const MesaOcupada = () => {
               />
               <Button
                 variant="destructive"
-                className="w-full"
+                className="w-full transition duration-200 ease-in-out transform hover:scale-105"
                 onClick={handleEliminarPedido}
               >
                 <X className="w-4 h-4 mr-2" /> Cancelar Pedido
               </Button>
             </div>
-            <Button variant="link" className="w-full" onClick={handleGoBack}>
+            <Button 
+              variant="link" 
+              className="w-full text-brandSecondary hover:text-brandSecondary/80 transition-colors" 
+              onClick={handleGoBack}
+            >
               ← Volver
             </Button>
           </div>
-          <div className="w-full md:w-2/3 space-y-6">
+          <div className="w-full lg:w-2/3 space-y-6">
             <h2 className="text-2xl font-semibold">Pedido:</h2>
 
             {isLoading ? (
-              <p>Cargando pedido...</p>
+              <p className="text-center text-gray-500">Cargando pedido...</p>
             ) : error ? (
-              <p className="text-red-500">{error}</p>
+              <p className="text-center text-red-500">{error}</p>
             ) : pedido ? (
               <>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Plato</TableHead>
-                      <TableHead>Cant.</TableHead>
-                      <TableHead>Precio U.</TableHead>
-                      <TableHead>Precio T.</TableHead>
-                      <TableHead>Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pedido.detalles.map((detalle: any) => (
-                      <TableRow key={detalle.PlatoID}>
-                        <TableCell>{detalle.descripcionPlato}</TableCell>
-                        <TableCell>{detalle.Cantidad}</TableCell>
-                        <TableCell>
-                          S/. {Number(detalle.PrecioUnitario).toFixed(2)}
-                        </TableCell>
-                        <TableCell>
-                          S/.{" "}
-                          {(detalle.Cantidad * detalle.PrecioUnitario).toFixed(
-                            2
-                          )}
-                        </TableCell>
-                        <TableCell className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleDecrementarCantidad(detalle.DetalleID)
-                            }
-                          >
-                            <MinusIcon size={16} />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              handleIncrementarCantidad(detalle.DetalleID)
-                            }
-                          >
-                            <PlusIcon size={16} />
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() =>
-                              handleEliminarPlato(detalle.DetalleID)
-                            }
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        </TableCell>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="whitespace-nowrap">Plato</TableHead>
+                        <TableHead className="whitespace-nowrap">Cant.</TableHead>
+                        <TableHead className="whitespace-nowrap">Precio U.</TableHead>
+                        <TableHead className="whitespace-nowrap">Precio T.</TableHead>
+                        <TableHead className="whitespace-nowrap">Acciones</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                <div className="flex justify-between items-center">
+                    </TableHeader>
+                    <TableBody>
+                      {pedido.detalles.map((detalle: any) => (
+                        <TableRow key={detalle.PlatoID}>
+                          <TableCell>{detalle.descripcionPlato}</TableCell>
+                          <TableCell>{detalle.Cantidad}</TableCell>
+                          <TableCell>
+                            S/. {Number(detalle.PrecioUnitario).toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            S/.{" "}
+                            {(detalle.Cantidad * detalle.PrecioUnitario).toFixed(
+                              2
+                            )}
+                          </TableCell>
+                          <TableCell className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleDecrementarCantidad(detalle.DetalleID)
+                              }
+                              className="p-2 hover:bg-gray-100"
+                            >
+                              <MinusIcon size={16} />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() =>
+                                handleIncrementarCantidad(detalle.DetalleID)
+                              }
+                              className="p-2 hover:bg-gray-100"
+                            >
+                              <PlusIcon size={16} />
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() =>
+                                handleEliminarPlato(detalle.DetalleID)
+                              }
+                              className="p-2 hover:bg-red-600"
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                   <span className="text-xl font-semibold">
                     Total: S/. {pedido.total.toFixed(2)}
                   </span>
-                  <Select
-                    onValueChange={(value) => setTipoPago(Number(value))}
-                    value={tipoPago?.toString() || ""}
-                  >
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Pago" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">Efectivo</SelectItem>
-                      <SelectItem value="2">Yape</SelectItem>
-                      <SelectItem value="3">POS</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    size="lg"
-                    onClick={handlePagarPedido}
-                    disabled={tipoPago === null || isLoading}
-                  >
-                    Pagar
-                  </Button>
+                  <div className="flex items-center gap-4">
+                    <Select
+                      onValueChange={(value) => setTipoPago(Number(value))}
+                      value={tipoPago?.toString() || ""}
+                    >
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Pago" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="1">Efectivo</SelectItem>
+                        <SelectItem value="2">Yape</SelectItem>
+                        <SelectItem value="3">POS</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      size="lg"
+                      onClick={handlePagarPedido}
+                      disabled={tipoPago === null || isLoading}
+                      className="bg-brandSecondary hover:bg-brandSecondary/90 text-white transition-colors"
+                    >
+                      Pagar
+                    </Button>
+                  </div>
                 </div>
               </>
             ) : (
-              <p>No se encontró ningún pedido activo para estas mesas.</p>
+              <p className="text-center text-gray-500">No se encontró ningún pedido activo para estas mesas.</p>
             )}
           </div>
         </div>
@@ -427,3 +439,4 @@ export const MesaOcupada = () => {
     </div>
   );
 };
+

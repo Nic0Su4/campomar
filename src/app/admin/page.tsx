@@ -25,6 +25,7 @@ export default function AdminPage() {
         {/* Gestión de Empleados */}
         <GestionEmpleados />
 
+        {/* Resumen del Dashboard */}
         <DashboardSummary />
       </Tabs>
     </div>

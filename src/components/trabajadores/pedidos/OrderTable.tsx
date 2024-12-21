@@ -10,7 +10,7 @@ const OrderTable = ({
   refreshKey: number;
 }) => {
   return (
-    <div className="overflow-auto flex-grow">
+    <div className="rounded-md border">
       <Table>
         <TableHeader>
           <OrderTableHeader />
@@ -24,3 +24,4 @@ const OrderTable = ({
 };
 
 export default OrderTable;
+

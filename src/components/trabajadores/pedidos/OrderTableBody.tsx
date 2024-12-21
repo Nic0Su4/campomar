@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Loader2 } from 'lucide-react';
 
 const OrderTableBody = ({
   searchTerm,
@@ -95,7 +96,10 @@ const OrderTableBody = ({
   if (loading)
     return (
       <TableRow>
-        <TableCell>Cargando pedidos...</TableCell>
+        <TableCell colSpan={6} className="h-24 text-center">
+          <Loader2 className="w-6 h-6 animate-spin mx-auto" />
+          <span className="sr-only">Cargando pedidos...</span>
+        </TableCell>
       </TableRow>
     );
 
@@ -129,22 +133,22 @@ const OrderTableBody = ({
           open={!!selectedOrder}
           onOpenChange={() => setSelectedOrder(null)}
         >
-          <DialogContent>
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Detalles del Pedido</DialogTitle>
               <DialogDescription>
                 Pedido ID: {selectedOrder.PedidoID}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 mt-4">
               {selectedOrder.detallepedidos.map((detalle: any) => (
                 <div
                   key={detalle.DetalleID}
-                  className="flex justify-between border-b pb-2"
+                  className="flex justify-between items-center border-b pb-2"
                 >
-                  <span>{detalle.platos.Descripcion}</span>
-                  <span>{detalle.Cantidad}x</span>
-                  <span>
+                  <span className="font-medium">{detalle.platos.Descripcion}</span>
+                  <span className="text-sm text-muted-foreground">{detalle.Cantidad}x</span>
+                  <span className="font-semibold">
                     S/. {(detalle.platos.Precio * detalle.Cantidad).toFixed(2)}
                   </span>
                 </div>
@@ -161,3 +165,4 @@ const OrderTableBody = ({
 };
 
 export default OrderTableBody;
+

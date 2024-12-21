@@ -14,7 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Edit, PlusCircle, Trash2 } from "lucide-react";
+import { Edit, PlusCircle, Trash2 } from 'lucide-react';
 import { empleados } from "@prisma/client";
 import { Spinner } from "../ui/spinner";
 import {
@@ -27,7 +27,6 @@ import {
 
 export const GestionEmpleados = () => {
   const [employees, setEmployees] = useState<empleados[]>([]);
-
   const [newEmployee, setNewEmployee] = useState<empleados>({
     EmpleadoID: 0,
     Nombre: "",
@@ -35,9 +34,7 @@ export const GestionEmpleados = () => {
     DNI: "",
     Password: "",
   });
-  const [editingEmployee, setEditingEmployee] = useState<empleados | null>(
-    null
-  );
+  const [editingEmployee, setEditingEmployee] = useState<empleados | null>(null);
   const [loadingEmployees, setLoadingEmployees] = useState<boolean>(false);
 
   useEffect(() => {
@@ -185,41 +182,36 @@ export const GestionEmpleados = () => {
 
   return (
     <TabsContent value="employees">
-      <Card>
+      <Card className="border-t-2 border-[#00631b]">
         <CardHeader>
-          <CardTitle>Gestión de Empleados</CardTitle>
+          <CardTitle className="text-2xl font-bold text-gray-800 border-b-2 border-[#00631b] inline-block pb-2">
+            Gestión de Empleados
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-wrap gap-8 mb-6">
-            <div className="flex-1">
-              <Label htmlFor="employeeName">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div>
+              <Label htmlFor="employeeName" className="text-gray-700 font-medium">
                 {editingEmployee ? "Editar Nombre" : "Nombre Empleado"}
               </Label>
               <Input
                 required
                 id="employeeName"
-                value={
-                  editingEmployee
-                    ? editingEmployee.Nombre!
-                    : newEmployee.Nombre!
-                }
+                value={editingEmployee ? editingEmployee.Nombre! : newEmployee.Nombre!}
                 onChange={(e) =>
                   editingEmployee
-                    ? setEditingEmployee({
-                        ...editingEmployee,
-                        Nombre: e.target.value,
-                      })
-                    : setNewEmployee({
-                        ...newEmployee,
-                        Nombre: e.target.value,
-                      })
+                    ? setEditingEmployee({ ...editingEmployee, Nombre: e.target.value })
+                    : setNewEmployee({ ...newEmployee, Nombre: e.target.value })
                 }
                 placeholder="Nombre del Empleado"
                 type="text"
+                className="mt-1 border-gray-300 focus:border-[#00631b] focus:ring focus:ring-[#00631b] focus:ring-opacity-50"
               />
             </div>
-            <div className="flex-1">
-              <Label htmlFor="employeeRole">Tipo de Empleado</Label>
+            <div>
+              <Label htmlFor="employeeRole" className="text-gray-700 font-medium">
+                Tipo de Empleado
+              </Label>
               <Select
                 required
                 value={
@@ -229,17 +221,11 @@ export const GestionEmpleados = () => {
                 }
                 onValueChange={(value) => {
                   editingEmployee
-                    ? setEditingEmployee({
-                        ...editingEmployee,
-                        TipoEmpleadoID: Number(value),
-                      })
-                    : setNewEmployee({
-                        ...newEmployee,
-                        TipoEmpleadoID: Number(value),
-                      });
+                    ? setEditingEmployee({ ...editingEmployee, TipoEmpleadoID: Number(value) })
+                    : setNewEmployee({ ...newEmployee, TipoEmpleadoID: Number(value) });
                 }}
               >
-                <SelectTrigger id="employeeRole">
+                <SelectTrigger id="employeeRole" className="mt-1 border-gray-300 focus:border-[#00631b] focus:ring focus:ring-[#00631b] focus:ring-opacity-50">
                   <SelectValue placeholder="Tipo de Empleado" />
                 </SelectTrigger>
                 <SelectContent>
@@ -248,66 +234,53 @@ export const GestionEmpleados = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-1">
-              <Label htmlFor="employeeDNI">
+            <div>
+              <Label htmlFor="employeeDNI" className="text-gray-700 font-medium">
                 {editingEmployee ? "Editar DNI" : "DNI"}
               </Label>
               <Input
                 required
                 id="employeeDNI"
-                value={
-                  editingEmployee ? editingEmployee.DNI! : newEmployee.DNI!
-                }
+                value={editingEmployee ? editingEmployee.DNI! : newEmployee.DNI!}
                 onChange={(e) =>
                   editingEmployee
-                    ? setEditingEmployee({
-                        ...editingEmployee,
-                        DNI: e.target.value,
-                      })
-                    : setNewEmployee({
-                        ...newEmployee,
-                        DNI: e.target.value,
-                      })
+                    ? setEditingEmployee({ ...editingEmployee, DNI: e.target.value })
+                    : setNewEmployee({ ...newEmployee, DNI: e.target.value })
                 }
                 placeholder="DNI"
                 type="text"
+                className="mt-1 border-gray-300 focus:border-[#00631b] focus:ring focus:ring-[#00631b] focus:ring-opacity-50"
               />
             </div>
-            <div className="flex-1">
-              <Label htmlFor="employeePassword">
+            <div>
+              <Label htmlFor="employeePassword" className="text-gray-700 font-medium">
                 {editingEmployee ? "Editar Contraseña" : "Contraseña"}
               </Label>
               <Input
                 required
                 id="employeePassword"
-                value={
-                  editingEmployee
-                    ? editingEmployee.Password!
-                    : newEmployee.Password!
-                }
+                value={editingEmployee ? editingEmployee.Password! : newEmployee.Password!}
                 onChange={(e) =>
                   editingEmployee
-                    ? setEditingEmployee({
-                        ...editingEmployee,
-                        Password: e.target.value,
-                      })
-                    : setNewEmployee({
-                        ...newEmployee,
-                        Password: e.target.value,
-                      })
+                    ? setEditingEmployee({ ...editingEmployee, Password: e.target.value })
+                    : setNewEmployee({ ...newEmployee, Password: e.target.value })
                 }
                 placeholder="Contraseña"
-                type="text"
+                type="password"
+                className="mt-1 border-gray-300 focus:border-[#00631b] focus:ring focus:ring-[#00631b] focus:ring-opacity-50"
               />
             </div>
+          </div>
+          <div className="flex justify-end mb-8">
             <Button
               onClick={editingEmployee ? handleEditEmployee : handleAddEmployee}
-              className="mt-auto"
+              className="bg-[#00631b] hover:bg-[#00631b]/90 text-white"
               disabled={loadingEmployees}
             >
               {loadingEmployees ? (
                 <>
-                  <Spinner /> {editingEmployee ? "Guardando..." : "Cargando..."}
+                  <Spinner className="mr-2 h-4 w-4" />
+                  {editingEmployee ? "Guardando..." : "Cargando..."}
                 </>
               ) : (
                 <>
@@ -317,45 +290,52 @@ export const GestionEmpleados = () => {
               )}
             </Button>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>DNI</TableHead>
-                <TableHead>Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {employees.map((employee) => (
-                <TableRow key={employee.EmpleadoID}>
-                  <TableCell>{employee.Nombre}</TableCell>
-                  <TableCell>
-                    {employee.TipoEmpleadoID == 1 ? "Mesero" : "Admin"}
-                  </TableCell>
-                  <TableCell>{employee.DNI}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="default"
-                      size="sm"
-                      onClick={() => selectEmployeeForEdit(employee)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteEmployee(employee.EmpleadoID)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gray-100">
+                  <TableHead className="font-semibold text-gray-700">Nombre</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Tipo</TableHead>
+                  <TableHead className="font-semibold text-gray-700">DNI</TableHead>
+                  <TableHead className="font-semibold text-gray-700">Acciones</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {employees.map((employee) => (
+                  <TableRow key={employee.EmpleadoID} className="hover:bg-gray-50">
+                    <TableCell>{employee.Nombre}</TableCell>
+                    <TableCell>
+                      {employee.TipoEmpleadoID == 1 ? "Mesero" : "Admin"}
+                    </TableCell>
+                    <TableCell>{employee.DNI}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => selectEmployeeForEdit(employee)}
+                          className="text-blue-600 hover:text-blue-700 hover:border-blue-700"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteEmployee(employee.EmpleadoID)}
+                          className="text-red-600 hover:text-red-700 hover:border-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
     </TabsContent>
   );
 };
+

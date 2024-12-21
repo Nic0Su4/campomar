@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, ShoppingCart, Search, Trash } from "lucide-react"; // Se agrega Trash y Minus para iconos
+import { Plus, ShoppingCart, Search, Trash } from 'lucide-react';
 import { empleados, mesas, platos } from "@prisma/client";
 import { useEmpleadoStore } from "@/store/empleado";
 import { useRouter } from "next/navigation";
@@ -34,7 +34,6 @@ interface PedidoItem extends platos {
 
 export default function MesaLibre({ mesas }: MesaProps) {
   const router = useRouter();
-
   const [orderItems, setOrderItems] = useState<PedidoItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [platos, setPlatos] = useState<PedidoItem[]>([]);
@@ -43,7 +42,6 @@ export default function MesaLibre({ mesas }: MesaProps) {
   const empleado: empleados = useEmpleadoStore((state: any) => state.empleado);
   const [filterCategory, setFilterCategory] = useState<string>("");
 
-  // useEffect para hacer fetch de los platos
   useEffect(() => {
     const fetchPlatos = async () => {
       try {
@@ -74,7 +72,6 @@ export default function MesaLibre({ mesas }: MesaProps) {
     const filtered = platos.filter((plato) =>
       plato.Descripcion!.toLowerCase().includes(searchTerm.toLowerCase())
     );
-    // código para filtar por categoría
     const categoryFiltered = filtered.filter((plato) => {
       if (filterCategory === "todos" || filterCategory === "") {
         return true;
@@ -120,32 +117,17 @@ export default function MesaLibre({ mesas }: MesaProps) {
     }
   };
 
-  useEffect(() => {
-    const filtered = platos.filter((plato) =>
-      plato.Descripcion!.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    // código para filtar por categoría
-    const categoryFiltered = filtered.filter((plato) => {
-      if (filterCategory === "todos" || filterCategory === "") {
-        return true;
-      }
-      return plato.CategoriaID === parseInt(filterCategory);
-    });
-    setFilteredPlatos(categoryFiltered);
-  }, [searchTerm, filterCategory, platos]);
-
   const total = orderItems.reduce(
     (sum, item) => sum + (Number(item.Precio) ?? 0) * item.Cantidad,
     0
   );
 
   if (isLoading) {
-    return <div>Cargando...</div>;
+    return <div className="flex justify-center items-center h-[calc(100vh-8rem)]">Cargando...</div>;
   }
 
   const handleRealizarPedido = async () => {
     try {
-      // Creamos el pedido
       const nuevoPedido = {
         EmpleadoID: empleado.EmpleadoID,
         Fecha: new Date(),
@@ -164,14 +146,12 @@ export default function MesaLibre({ mesas }: MesaProps) {
         throw new Error("Error al crear el pedido");
       }
 
-      // Relacionamos el pedido con los platos
       const pedido = await response.json();
       const PedidoID = pedido.PedidoID;
 
-      // Usamos Promise.all para hacer todas las peticiones en paralelo
-      const mesasDetallePromise = await Promise.all(
-        orderItems.map((item) => {
-          return fetch("/api/detallepedidos", {
+      await Promise.all(
+        orderItems.map((item) =>
+          fetch("/api/detallepedidos", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -181,60 +161,46 @@ export default function MesaLibre({ mesas }: MesaProps) {
               PlatoID: item.PlatoID,
               Cantidad: item.Cantidad,
             }),
-          });
-        })
+          })
+        )
       );
 
-      if (!mesasDetallePromise.every((response) => response.ok)) {
-        throw new Error("Error al crear el detalle del pedido");
-      }
-
-      // Relacionamos el pedido con las mesas
       const mesasRelacionadas = mesas.map((mesa) => ({
         PedidoID,
         MesaID: mesa.MesaID,
       }));
 
-      const responesMesas = await Promise.all(
-        mesasRelacionadas.map((mesa) => {
-          return fetch("/api/pedido_mesas", {
+      await Promise.all(
+        mesasRelacionadas.map((mesa) =>
+          fetch("/api/pedido_mesas", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify(mesa),
-          });
-        })
+          })
+        )
       );
 
-      if (!responesMesas.every((response) => response.ok)) {
-        throw new Error("Error al relacionar el pedido con las mesas");
-      }
-
-      // Actualizamos el estado de las mesas
-      // Aquí deberíamos hacer una petición para actualizar el estado de las mesas
       const mesasActualizadas = mesas.map((mesa) => ({
         ...mesa,
         Estado: "Ocupada",
       }));
 
-      // Usamos Promise.all para hacer todas las peticiones en paralelo
-      const mesasUpdatePromise = await Promise.all(
-        mesasActualizadas.map((mesa) => {
-          return fetch(`/api/mesas/${mesa.MesaID}`, {
+      await Promise.all(
+        mesasActualizadas.map((mesa) =>
+          fetch(`/api/mesas/${mesa.MesaID}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify(mesa),
-          });
-        })
+          })
+        )
       );
 
       setOrderItems([]);
-
       router.push("/empleado");
-
       alert("Pedido realizado correctamente");
     } catch (error) {
       console.error(error);
@@ -243,119 +209,117 @@ export default function MesaLibre({ mesas }: MesaProps) {
   };
 
   return (
-    <div className="w-[400px] sm:w-[550px] md:w-[600px] lg:w-[900px]  min-h-screen bg-gray-100 p-2">
-      <div className="mx-auto max-w-6xl bg-white rounded-lg shadow-lg overflow-hidden">
+    <div className="flex justify-center items-center min-h-[calc(100vh-8rem)] py-8 mt-3 mb-3">
+      <div className="w-full max-w-7xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         <header className="bg-primary text-primary-foreground p-6">
-          <h1 className="text-3xl font-bold">
+          <h1 className="text-2xl sm:text-3xl font-bold">
             Nuevo Pedido - Mesa(s) {mesas.map((mesa) => mesa.MesaID).join(", ")}
           </h1>
         </header>
-        <div className="flex flex-col md:flex-row p-2 gap-8">
-          <div className="w-full md:w-1/2 space-y-6">
+        <div className="flex flex-col lg:flex-row p-4 sm:p-6 gap-6 lg:gap-8">
+          <div className="w-full lg:w-1/2 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Menú</CardTitle>
+                <CardTitle className="text-xl font-semibold">Menú</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center space-x-2 mb-4">
-                  <Search className="w-5 h-5 text-gray-500" />
-                  <Input
-                    type="text"
-                    placeholder="Buscar platos..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="flex-grow"
-                  />
+                <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
+                  <div className="relative w-full sm:w-2/3">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <Input
+                      type="text"
+                      placeholder="Buscar platos..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 w-full"
+                    />
+                  </div>
+                  <Select
+                    value={filterCategory}
+                    onValueChange={setFilterCategory}
+                  >
+                    <SelectTrigger className="w-full sm:w-1/3">
+                      <SelectValue placeholder="Categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos</SelectItem>
+                      <SelectItem value="1">Criollo</SelectItem>
+                      <SelectItem value="2">Bebida</SelectItem>
+                      <SelectItem value="3">Porción</SelectItem>
+                      <SelectItem value="4">Caldo</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Select
-                  value={filterCategory}
-                  onValueChange={setFilterCategory}
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Categoría" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="1">Criollo</SelectItem>
-                    <SelectItem value="2">Bebida</SelectItem>
-                    <SelectItem value="3">Porción</SelectItem>
-                    <SelectItem value="4">Caldo</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Plato</TableHead>
-                      <TableHead>Precio</TableHead>
-                      <TableHead>Acción</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPlatos.map((item) => (
-                      <TableRow key={item.PlatoID}>
-                        <TableCell>{item.Descripcion}</TableCell>
-                        <TableCell>
-                          S/. {Number(item.Precio!).toFixed(2)}
-                        </TableCell>
-                        <TableCell>
-                          <Button size="sm" onClick={() => addToOrder(item)}>
-                            <Plus className="w-4 h-4 mr-2" /> Agregar
-                          </Button>
-                        </TableCell>
+                <div className="max-h-[calc(100vh-24rem)] overflow-y-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Plato</TableHead>
+                        <TableHead>Precio</TableHead>
+                        <TableHead>Acción</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPlatos.map((item) => (
+                        <TableRow key={item.PlatoID}>
+                          <TableCell className="font-medium">{item.Descripcion}</TableCell>
+                          <TableCell>S/. {Number(item.Precio!).toFixed(2)}</TableCell>
+                          <TableCell>
+                            <Button size="sm" onClick={() => addToOrder(item)}>
+                              <Plus className="w-4 h-4 mr-2" /> Agregar
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </div>
-          <div className="w-full md:w-1/2 space-y-6">
+          <div className="w-full lg:w-1/2 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Resumen del Pedido</CardTitle>
+                <CardTitle className="text-xl font-semibold">Resumen del Pedido</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Plato</TableHead>
-                      <TableHead>Cant.</TableHead>
-                      <TableHead>Precio</TableHead>
-                      <TableHead>Total</TableHead>
-                      <TableHead>Acción</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {orderItems.map((item) => (
-                      <TableRow key={item.PlatoID}>
-                        <TableCell>{item.Descripcion}</TableCell>
-                        <TableCell>{item.Cantidad}</TableCell>
-                        <TableCell>
-                          S/. {Number(item.Precio!).toFixed(2)}
-                        </TableCell>
-                        <TableCell>
-                          S/.{" "}
-                          {(Number(item.Precio ?? 0) * item.Cantidad).toFixed(
-                            2
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => removeFromOrder(item)}
-                          >
-                            <Trash className="w-4 h-4 mr-2" /> Eliminar
-                          </Button>
-                        </TableCell>
+                <div className="max-h-[calc(100vh-28rem)] overflow-y-auto mb-4">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Plato</TableHead>
+                        <TableHead>Cant.</TableHead>
+                        <TableHead>Precio</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Acción</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                <div className="mt-4 flex justify-between items-center">
-                  <span className="text-xl font-semibold">
-                    Total: S/. {total.toFixed(2)}
-                  </span>
+                    </TableHeader>
+                    <TableBody>
+                      {orderItems.map((item) => (
+                        <TableRow key={item.PlatoID}>
+                          <TableCell className="font-medium">{item.Descripcion}</TableCell>
+                          <TableCell>{item.Cantidad}</TableCell>
+                          <TableCell>S/. {Number(item.Precio!).toFixed(2)}</TableCell>
+                          <TableCell>
+                            S/. {(Number(item.Precio ?? 0) * item.Cantidad).toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => removeFromOrder(item)}
+                            >
+                              <Trash className="w-4 h-4 mr-2" /> Eliminar
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="flex justify-between items-center border-t pt-4">
+                  <span className="text-xl font-semibold">Total:</span>
+                  <span className="text-2xl font-bold">S/. {total.toFixed(2)}</span>
                 </div>
               </CardContent>
             </Card>
@@ -373,3 +337,4 @@ export default function MesaLibre({ mesas }: MesaProps) {
     </div>
   );
 }
+

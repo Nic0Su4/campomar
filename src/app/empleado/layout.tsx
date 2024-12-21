@@ -14,10 +14,11 @@ const EmpleadoLayout = ({ children }: EmpleadoLayoutProps) => {
         <Reloj />
       </header>
       <div className="w-full h-full flex justify-center">{children}</div>
-      <footer className="flex justify-between w-full bg-black text-white py-4 px-12 items-center">
+      <footer className="bg-gradient-to-r from-gray-900 to-gray-800 text-white py-4 px-6 flex justify-between items-center w-full">
         <Logout />
+        <p className="text-sm text-gray-400">© 2024 Campomar</p>
         <Sesion />
-      </footer>
+    </footer>
     </EmpleadoLayoutWrapper>
   );
 };

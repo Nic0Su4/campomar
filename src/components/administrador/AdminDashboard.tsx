@@ -1,11 +1,11 @@
 "use client";
 
 import React, { useCallback, useEffect, useState } from "react";
-import { TabsContent } from "../ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -14,13 +14,26 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Spinner } from "../ui/spinner";
-import { fetchEarnings, fetchTopSellingDishes } from "@/utils/dashboardUtils";
+import { Spinner } from "@/components/ui/spinner";
+import {
+  fetchEarnings,
+  fetchTopSellingDishes,
+  fetchSalesByEmployee,
+} from "@/utils/dashboardUtils";
+import { motion } from "framer-motion";
 
 export const DashboardSummary = () => {
   const [earnings, setEarnings] = useState<number>(0);
+  const [earningsByPaymentType, setEarningsByPaymentType] = useState<{
+    efectivo: number;
+    yape: number;
+    pos: number;
+  }>({ efectivo: 0, yape: 0, pos: 0 });
   const [topDishes, setTopDishes] = useState<
     { dish: string; totalSold: number }[]
+  >([]);
+  const [salesByEmployee, setSalesByEmployee] = useState<
+    { empleado: string; totalSold: number }[]
   >([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [dateRange, setDateRange] = useState<{
@@ -28,12 +41,9 @@ export const DashboardSummary = () => {
     endDate?: string;
   }>({});
 
-  // New state to track which predefined range is selected
   const [selectedPredefinedRange, setSelectedPredefinedRange] = useState<
     number | null
   >(null);
-
-  // New state for custom date selection
   const [customDateMode, setCustomDateMode] = useState<boolean>(false);
 
   const fetchData = useCallback(async () => {
@@ -49,9 +59,15 @@ export const DashboardSummary = () => {
         dateRange.startDate,
         dateRange.endDate
       );
+      const salesByEmployeeData = await fetchSalesByEmployee(
+        dateRange.startDate,
+        dateRange.endDate
+      );
 
-      setEarnings(earningsData);
+      setEarnings(earningsData.earnings);
+      setEarningsByPaymentType(earningsData.earningsByPaymentType);
       setTopDishes(topDishesData);
+      setSalesByEmployee(salesByEmployeeData);
     } catch (error) {
       console.error("Error al cargar los datos del dashboard", error);
     } finally {
@@ -75,7 +91,6 @@ export const DashboardSummary = () => {
       endDate,
     });
 
-    // Reset custom date mode and set selected predefined range
     setCustomDateMode(false);
     setSelectedPredefinedRange(days);
   };
@@ -90,26 +105,20 @@ export const DashboardSummary = () => {
       endDate: endDate.toISOString().split("T")[0],
     });
 
-    // Reset custom date mode and set selected predefined range
     setCustomDateMode(false);
     setSelectedPredefinedRange(365);
   };
 
   const handleDateChange = (key: "startDate" | "endDate", value: string) => {
-    setDateRange((prev) => {
-      const updatedRange = { ...prev, [key]: value };
-      return updatedRange;
-    });
+    setDateRange((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleCustomSearch = () => {
-    // Only proceed if both dates are selected and start date is before end date
     if (
       dateRange.startDate &&
       dateRange.endDate &&
       new Date(dateRange.startDate) <= new Date(dateRange.endDate)
     ) {
-      // Reset predefined range selection
       setSelectedPredefinedRange(null);
       fetchData();
     }
@@ -117,51 +126,34 @@ export const DashboardSummary = () => {
 
   return (
     <TabsContent value="dashboard-summary">
-      <Card>
+      <Card className="border-t-2 border-[#00631b]">
         <CardHeader>
-          <CardTitle>Resumen del Dashboard</CardTitle>
+          <CardTitle className="text-gray-800 border-b-2 border-[#00631b] inline-block pb-1">Resumen del Dashboard</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4 mb-6">
             <div>
-              <Label>Rango de Fechas</Label>
+              <Label className="text-gray-600 font-medium">Rango de Fechas</Label>
               <div className="flex flex-wrap gap-2">
-                <Button
-                  onClick={() => setPredefinedRange(1)}
-                  variant={
-                    selectedPredefinedRange === 1 ? "default" : "outline"
-                  }
-                >
-                  Hoy
-                </Button>
-                <Button
-                  onClick={() => setPredefinedRange(7)}
-                  variant={
-                    selectedPredefinedRange === 7 ? "default" : "outline"
-                  }
-                >
-                  Últimos 7 días
-                </Button>
-                <Button
-                  onClick={() => setPredefinedRange(30)}
-                  variant={
-                    selectedPredefinedRange === 30 ? "default" : "outline"
-                  }
-                >
-                  Últimos 30 días
-                </Button>
-                <Button
-                  onClick={setFullYearRange}
-                  variant={
-                    selectedPredefinedRange === 365 ? "default" : "outline"
-                  }
-                >
-                  De todo el año
-                </Button>
+                {[
+                  { days: 1, label: "Hoy" },
+                  { days: 7, label: "Últimos 7 días" },
+                  { days: 30, label: "Últimos 30 días" },
+                  { days: 365, label: "De todo el año" },
+                ].map(({ days, label }) => (
+                  <Button
+                    key={days}
+                    onClick={() => days === 365 ? setFullYearRange() : setPredefinedRange(days)}
+                    variant={selectedPredefinedRange === days ? "default" : "outline"}
+                    className={selectedPredefinedRange === days ? "bg-[#00631b] text-white hover:bg-[#00631b]/90" : "hover:border-[#00631b]"}
+                  >
+                    {label}
+                  </Button>
+                ))}
               </div>
             </div>
             <div>
-              <Label>Personalizado</Label>
+              <Label className="text-gray-600 font-medium">Personalizado</Label>
               <div className="flex gap-2 items-end">
                 <div>
                   <Label htmlFor="startDate">Fecha de Inicio</Label>
@@ -175,6 +167,7 @@ export const DashboardSummary = () => {
                       setSelectedPredefinedRange(null);
                     }}
                     max={dateRange.endDate || undefined}
+                    className="border-gray-300 focus:ring-gray-400 focus:border-gray-400"
                   />
                 </div>
                 <div>
@@ -189,43 +182,86 @@ export const DashboardSummary = () => {
                       setSelectedPredefinedRange(null);
                     }}
                     min={dateRange.startDate || undefined}
+                    className="border-gray-300 focus:ring-gray-400 focus:border-gray-400"
                   />
                 </div>
                 <Button
                   onClick={handleCustomSearch}
                   disabled={!dateRange.startDate || !dateRange.endDate}
                   variant={customDateMode ? "default" : "outline"}
+                  className={customDateMode ? "bg-gray-800 hover:bg-gray-700" : "hover:bg-gray-100"}
                 >
                   Buscar
                 </Button>
               </div>
             </div>
           </div>
-          <div className="mb-6">
-            <Label>Ganancias Totales</Label>
+
+          <motion.div 
+            className="mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Label className="text-gray-700 font-medium border-l-4 border-[#00631b] pl-2">Ganancias Totales</Label>
             {loading ? (
-              <Spinner />
+              <Spinner className="text-gray-600" />
             ) : (
-              <p className="text-xl font-semibold">
+              <p className="text-3xl font-bold text-[#00631b]">
                 S/. {Number(earnings).toFixed(2)}
               </p>
             )}
-          </div>
-          <div>
-            <Label>Platos Más Vendidos</Label>
+          </motion.div>
+
+          <motion.div 
+            className="mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Label className="text-gray-700 font-medium border-l-4 border-[#00631b] pl-2">Ganancias por Tipo de Pago</Label>
             {loading ? (
-              <Spinner />
+              <Spinner className="text-gray-600" />
             ) : (
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Plato</TableHead>
-                    <TableHead>Total Vendido</TableHead>
+                    <TableHead className="text-gray-600 border-b-2 border-[#00631b]">Tipo de Pago</TableHead>
+                    <TableHead className="text-gray-600 border-b-2 border-[#00631b]">Ganancias</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {Object.entries(earningsByPaymentType).map(([type, amount]) => (
+                    <TableRow key={type} className="hover:bg-[#00631b]/5 transition-colors">
+                      <TableCell>{type.charAt(0).toUpperCase() + type.slice(1)}</TableCell>
+                      <TableCell>S/. {amount.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </motion.div>
+
+          <motion.div 
+            className="mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+          >
+            <Label className="text-gray-700 font-medium border-l-4 border-[#00631b] pl-2">Platos más vendidos</Label>
+            {loading ? (
+              <Spinner className="text-gray-600" />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-gray-600 border-b-2 border-[#00631b]">Plato</TableHead>
+                    <TableHead className="text-gray-600 border-b-2 border-[#00631b]">Total Vendido</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {topDishes.map((dish, index) => (
-                    <TableRow key={index}>
+                    <TableRow key={index} className="hover:bg-[#00631b]/5 transition-colors">
                       <TableCell>{dish.dish}</TableCell>
                       <TableCell>{dish.totalSold}</TableCell>
                     </TableRow>
@@ -233,9 +269,39 @@ export const DashboardSummary = () => {
                 </TableBody>
               </Table>
             )}
-          </div>
+          </motion.div>
+
+          <motion.div 
+            className="mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+          >
+            <Label className="text-gray-700 font-medium border-l-4 border-[#00631b] pl-2">Ventas por Empleado</Label>
+            {loading ? (
+              <Spinner className="text-gray-600" />
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="text-gray-600 border-b-2 border-[#00631b]">Empleado</TableHead>
+                    <TableHead className="text-gray-600 border-b-2 border-[#00631b]">Total Vendido</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {salesByEmployee.map((employee, index) => (
+                    <TableRow key={index} className="hover:bg-[#00631b]/5 transition-colors">
+                      <TableCell>{employee.empleado}</TableCell>
+                      <TableCell>S/. {employee.totalSold.toFixed(2)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </motion.div>
         </CardContent>
       </Card>
     </TabsContent>
   );
 };
+
