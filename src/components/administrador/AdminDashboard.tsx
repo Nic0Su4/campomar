@@ -14,26 +14,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Spinner } from "@/components/ui/spinner";
-import {
-  fetchEarnings,
-  fetchTopSellingDishes,
-  fetchSalesByEmployee,
-} from "@/utils/dashboardUtils";
-import { motion } from "framer-motion";
+import { Spinner } from "../ui/spinner";
+import { fetchEarnings, fetchTopSellingDishes } from "@/utils/dashboardUtils";
 
+// Agrega nuevos estados para las ventas por empleado
 export const DashboardSummary = () => {
   const [earnings, setEarnings] = useState<number>(0);
-  const [earningsByPaymentType, setEarningsByPaymentType] = useState<{
-    efectivo: number;
-    yape: number;
-    pos: number;
-  }>({ efectivo: 0, yape: 0, pos: 0 });
   const [topDishes, setTopDishes] = useState<
     { dish: string; totalSold: number }[]
-  >([]);
-  const [salesByEmployee, setSalesByEmployee] = useState<
-    { empleado: string; totalSold: number }[]
   >([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [dateRange, setDateRange] = useState<{
@@ -51,10 +39,13 @@ export const DashboardSummary = () => {
 
     setLoading(true);
     try {
+      // Llama a la API para obtener las ganancias totales y las ganancias por tipo de pago
       const earningsData = await fetchEarnings(
         dateRange.startDate,
         dateRange.endDate
       );
+
+      // Llama a la API para obtener los platos más vendidos
       const topDishesData = await fetchTopSellingDishes(
         dateRange.startDate,
         dateRange.endDate
@@ -64,8 +55,7 @@ export const DashboardSummary = () => {
         dateRange.endDate
       );
 
-      setEarnings(earningsData.earnings);
-      setEarningsByPaymentType(earningsData.earningsByPaymentType);
+      setEarnings(earningsData);
       setTopDishes(topDishesData);
       setSalesByEmployee(salesByEmployeeData);
     } catch (error) {
@@ -196,14 +186,8 @@ export const DashboardSummary = () => {
               </div>
             </div>
           </div>
-
-          <motion.div 
-            className="mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Label className="text-gray-700 font-medium border-l-4 border-[#00631b] pl-2">Ganancias Totales</Label>
+          <div className="mb-6">
+            <Label>Ganancias Totales</Label>
             {loading ? (
               <Spinner className="text-gray-600" />
             ) : (
@@ -211,44 +195,9 @@ export const DashboardSummary = () => {
                 S/. {Number(earnings).toFixed(2)}
               </p>
             )}
-          </motion.div>
-
-          <motion.div 
-            className="mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
-            <Label className="text-gray-700 font-medium border-l-4 border-[#00631b] pl-2">Ganancias por Tipo de Pago</Label>
-            {loading ? (
-              <Spinner className="text-gray-600" />
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-gray-600 border-b-2 border-[#00631b]">Tipo de Pago</TableHead>
-                    <TableHead className="text-gray-600 border-b-2 border-[#00631b]">Ganancias</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {Object.entries(earningsByPaymentType).map(([type, amount]) => (
-                    <TableRow key={type} className="hover:bg-[#00631b]/5 transition-colors">
-                      <TableCell>{type.charAt(0).toUpperCase() + type.slice(1)}</TableCell>
-                      <TableCell>S/. {amount.toFixed(2)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </motion.div>
-
-          <motion.div 
-            className="mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.4 }}
-          >
-            <Label className="text-gray-700 font-medium border-l-4 border-[#00631b] pl-2">Platos más vendidos</Label>
+          </div>
+          <div>
+            <Label>Platos Más Vendidos</Label>
             {loading ? (
               <Spinner className="text-gray-600" />
             ) : (
@@ -269,36 +218,7 @@ export const DashboardSummary = () => {
                 </TableBody>
               </Table>
             )}
-          </motion.div>
-
-          <motion.div 
-            className="mb-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.6 }}
-          >
-            <Label className="text-gray-700 font-medium border-l-4 border-[#00631b] pl-2">Ventas por Empleado</Label>
-            {loading ? (
-              <Spinner className="text-gray-600" />
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="text-gray-600 border-b-2 border-[#00631b]">Empleado</TableHead>
-                    <TableHead className="text-gray-600 border-b-2 border-[#00631b]">Total Vendido</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {salesByEmployee.map((employee, index) => (
-                    <TableRow key={index} className="hover:bg-[#00631b]/5 transition-colors">
-                      <TableCell>{employee.empleado}</TableCell>
-                      <TableCell>S/. {employee.totalSold.toFixed(2)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </motion.div>
+          </div>
         </CardContent>
       </Card>
     </TabsContent>
