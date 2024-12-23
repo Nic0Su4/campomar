@@ -20,7 +20,7 @@ const EmpleadoPage = () => {
       const storedEmpleado = localStorage.getItem("empleado");
       if (storedEmpleado && !empleado) {
         setEmpleado(JSON.parse(storedEmpleado));
-      } else if (!storedEmpleado) {
+      } else if (!storedEmpleado || empleado?.TipoEmpleadoID === 2) {
         redirect("/login");
       }
       setLoading(false);

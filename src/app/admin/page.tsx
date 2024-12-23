@@ -1,11 +1,35 @@
+"use client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { GestionMesas } from "@/components/administrador/GestionMesas";
 import { GestionEmpleados } from "@/components/administrador/GestionEmpleados";
 import { GestionPlatos } from "@/components/administrador/GestionPlatos";
 import { DashboardSummary } from "@/components/administrador/AdminDashboard";
 import { AdminHeader } from "@/components/administrador/AdminHeader";
+import { useEmpleadoStore } from "@/store/empleado";
+import { useEffect, useState } from "react";
+import { empleados } from "@prisma/client";
+import { redirect } from "next/navigation";
 
 export default function AdminPage() {
+  const empleado = useEmpleadoStore(
+    (state: any) => state.empleado
+  ) as empleados | null;
+
+  const setEmpleado = useEmpleadoStore((state: any) => state.setEmpleado);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedEmpleado = localStorage.getItem("empleado");
+      if (storedEmpleado && !empleado) {
+        setEmpleado(JSON.parse(storedEmpleado));
+      } else if (!storedEmpleado || empleado?.TipoEmpleadoID === 1) {
+        redirect("/login");
+      }
+      setLoading(false);
+    }
+  }, [empleado, setEmpleado]);
+
   return (
     <div className="min-h-screen bg-gray-100">
       <AdminHeader />
@@ -13,26 +37,26 @@ export default function AdminPage() {
       <main className="container mx-auto px-4 py-6">
         <Tabs defaultValue="tables" className="w-full">
           <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
-            <TabsTrigger 
-              value="tables" 
+            <TabsTrigger
+              value="tables"
               className="bg-white shadow-sm hover:bg-gray-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
             >
               Mesas
             </TabsTrigger>
             <TabsTrigger
-              value="dishes" 
+              value="dishes"
               className="bg-white shadow-sm hover:bg-gray-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
             >
               Platos
             </TabsTrigger>
-            <TabsTrigger 
-              value="employees" 
+            <TabsTrigger
+              value="employees"
               className="bg-white shadow-sm hover:bg-gray-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
             >
               Empleados
             </TabsTrigger>
-            <TabsTrigger 
-              value="dashboard-summary" 
+            <TabsTrigger
+              value="dashboard-summary"
               className="bg-white shadow-sm hover:bg-gray-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
             >
               Dashboard
@@ -61,4 +85,3 @@ export default function AdminPage() {
     </div>
   );
 }
-

@@ -1,23 +1,23 @@
-'use client';
+"use client";
 
-import { useRef } from 'react';
-import { useReactToPrint } from 'react-to-print';
-import CampomarReceipt from '@/components/trabajadores/boleta/Boleta';
+import { useRef } from "react";
+import { useReactToPrint } from "react-to-print";
+import CampomarReceipt from "@/components/trabajadores/boleta/Boleta";
 
-export default function BoletaTotal({ pedido }: { pedido: any }) {
+export default function BoletaTotal({ pedidoID }: { pedidoID: string }) {
   const receiptRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = useReactToPrint({
-    content: () => receiptRef.current,
-    documentTitle: `Boleta-Pedido-${pedido.PedidoID}`,
+    contentRef: receiptRef,
+    documentTitle: `Boleta-Pedido-${pedidoID}`,
   });
 
   return (
     <div>
-      <div style={{ display: 'none' }}>
-        <CampomarReceipt ref={receiptRef} pedido={pedido} />
+      <div style={{ display: "none" }}>
+        <CampomarReceipt ref={receiptRef} pedidoID={pedidoID} />
       </div>
-      <button onClick={handlePrint} className="hidden">
+      <button onClick={() => handlePrint} className="hidden">
         Imprimir
       </button>
     </div>
