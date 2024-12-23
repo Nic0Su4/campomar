@@ -17,7 +17,7 @@ export default function BoletaTotal({ pedidoID }: { pedidoID: string }) {
       <div style={{ display: "none" }}>
         <CampomarReceipt ref={receiptRef} pedidoID={pedidoID} />
       </div>
-      <button onClick={() => handlePrint} className="hidden">
+      <button onClick={() => handlePrint()} className="hidden">
         Imprimir
       </button>
     </div>
