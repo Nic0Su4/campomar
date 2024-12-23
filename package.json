@@ -33,6 +33,7 @@
     "react-dom": "^18",
     "react-hook-form": "^7.52.2",
     "react-live-clock": "^6.1.23-beta",
+    "react-to-print": "^3.0.3",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "yup": "^1.4.0",
