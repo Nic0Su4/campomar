@@ -1,22 +1,14 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { TabsContent } from "../ui/tabs";
+import { TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "../ui/label";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Edit, PlusCircle, Trash2 } from 'lucide-react';
 import { mesas } from "@prisma/client";
-import { Spinner } from "../ui/spinner";
+import { Spinner } from "@/components/ui/spinner";
 
 export const GestionMesas = () => {
   const [tables, setTables] = useState<mesas[]>([]);
@@ -190,44 +182,44 @@ export const GestionMesas = () => {
               )}
             </Button>
           </div>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold text-gray-700">Número</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Estado</TableHead>
-                  <TableHead className="font-semibold text-gray-700">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {tables.map((table) => (
-                  <TableRow key={table.MesaID} className="hover:bg-gray-50 transition-colors">
-                    <TableCell>{table.NumeroMesa}</TableCell>
-                    <TableCell>{table.Estado}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => selectTableForEdit(table)}
-                          className="text-gray-600 hover:text-gray-800 hover:border-gray-300"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteTable(table.MesaID)}
-                          className="text-red-600 hover:text-red-700 hover:border-red-300"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {tables.map((table) => (
+              <div
+                key={table.MesaID}
+                className="relative group"
+              >
+                <div
+                  className={`w-full aspect-square rounded-lg flex items-center justify-center text-2xl font-bold transition-colors ${
+                    table.Estado === 'Libre' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}
+                >
+                  {table.NumeroMesa}
+                </div>
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => selectTableForEdit(table)}
+                      className="bg-white text-gray-800 hover:bg-gray-100"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleDeleteTable(table.MesaID)}
+                      className="bg-white text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                <div className="mt-2 text-center text-sm font-medium text-gray-700">
+                  {table.Estado}
+                </div>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>

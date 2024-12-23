@@ -120,7 +120,7 @@ export const GestionPlatos = () => {
 
   return (
     <TabsContent value="dishes">
-      <Card className="border-t-2 border-gray-200">
+      <Card className="border-t-2 border-[#00631b]">
         <CardHeader>
           <CardTitle className="text-xl font-semibold text-gray-800">
             Gestión de Platos

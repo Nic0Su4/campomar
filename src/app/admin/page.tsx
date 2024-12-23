@@ -1,33 +1,64 @@
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { GestionMesas } from "@/components/administrador/GestionMesas";
 import { GestionEmpleados } from "@/components/administrador/GestionEmpleados";
 import { GestionPlatos } from "@/components/administrador/GestionPlatos";
 import { DashboardSummary } from "@/components/administrador/AdminDashboard";
+import { AdminHeader } from "@/components/administrador/AdminHeader";
 
 export default function AdminPage() {
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Panel de Administración</h1>
-      <Tabs defaultValue="tables" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="tables">Mesas</TabsTrigger>
-          <TabsTrigger value="dishes">Platos</TabsTrigger>
-          <TabsTrigger value="employees">Empleados</TabsTrigger>
-          <TabsTrigger value="dashboard-summary">Dashboard</TabsTrigger>
-        </TabsList>
+    <div className="min-h-screen bg-gray-100">
+      <AdminHeader />
 
-        {/* Gestión de Mesas */}
-        <GestionMesas />
+      <main className="container mx-auto px-4 py-6">
+        <Tabs defaultValue="tables" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-2 mb-6">
+            <TabsTrigger 
+              value="tables" 
+              className="bg-white shadow-sm hover:bg-gray-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            >
+              Mesas
+            </TabsTrigger>
+            <TabsTrigger
+              value="dishes" 
+              className="bg-white shadow-sm hover:bg-gray-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            >
+              Platos
+            </TabsTrigger>
+            <TabsTrigger 
+              value="employees" 
+              className="bg-white shadow-sm hover:bg-gray-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            >
+              Empleados
+            </TabsTrigger>
+            <TabsTrigger 
+              value="dashboard-summary" 
+              className="bg-white shadow-sm hover:bg-gray-50 data-[state=active]:bg-blue-600 data-[state=active]:text-white"
+            >
+              Dashboard
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Gestión de Platos */}
-        <GestionPlatos />
+          <div className="bg-white shadow rounded-lg p-4 sm:p-6">
+            <TabsContent value="tables">
+              <GestionMesas />
+            </TabsContent>
 
-        {/* Gestión de Empleados */}
-        <GestionEmpleados />
+            <TabsContent value="dishes">
+              <GestionPlatos />
+            </TabsContent>
 
-        {/* Resumen del Dashboard */}
-        <DashboardSummary />
-      </Tabs>
+            <TabsContent value="employees">
+              <GestionEmpleados />
+            </TabsContent>
+
+            <TabsContent value="dashboard-summary">
+              <DashboardSummary />
+            </TabsContent>
+          </div>
+        </Tabs>
+      </main>
     </div>
   );
 }
+
