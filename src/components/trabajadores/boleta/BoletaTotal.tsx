@@ -18,7 +18,7 @@ export default function BoletaTotal({ pedidoID }: { pedidoID: string }) {
 
   // Configuración de la función de impresión
   const handlePrint = useReactToPrint({
-    print: () => receiptRef.print(),
+    contentRef: receiptRef,
     documentTitle: `Boleta-Pedido-${pedidoID}`,
     onAfterPrint: () => console.log("Impresión completada."),
   });
