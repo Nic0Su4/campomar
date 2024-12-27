@@ -20,7 +20,7 @@ interface ReceiptData {
 }
 
 interface CampomarReceiptProps {
-  pedidoID?: string; // Opcional para mayor flexibilidad
+  pedidoID?: string;
 }
 
 const CampomarReceipt = forwardRef<HTMLDivElement, CampomarReceiptProps>((props, ref) => {
@@ -29,7 +29,7 @@ const CampomarReceipt = forwardRef<HTMLDivElement, CampomarReceiptProps>((props,
   const [error, setError] = useState<string | null>(null);
 
   const searchParams = useSearchParams();
-  const pedidoID = props.pedidoID || searchParams.get('pedidoID'); // Priorizar prop si se pasa
+  const pedidoID = props.pedidoID || searchParams.get('pedidoID');
 
   useEffect(() => {
     if (!pedidoID) {
@@ -56,7 +56,7 @@ const CampomarReceipt = forwardRef<HTMLDivElement, CampomarReceiptProps>((props,
   }, [pedidoID]);
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen">Cargando...</div>;
+    return <div className="flex justify-center items-center h-full">Cargando...</div>;
   }
 
   if (error) {
@@ -123,6 +123,7 @@ const CampomarReceipt = forwardRef<HTMLDivElement, CampomarReceiptProps>((props,
   );
 });
 
-CampomarReceipt.displayName = 'CampomarReceipt'; // Necesario al usar forwardRef
+CampomarReceipt.displayName = 'CampomarReceipt';
 
 export default CampomarReceipt;
+
