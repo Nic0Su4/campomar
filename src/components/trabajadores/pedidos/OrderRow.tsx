@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import BoletaTotal from "../boleta/BoletaTotal";
 
 const OrderRow = ({
   order,
@@ -90,6 +91,9 @@ const OrderRow = ({
             <Check className="w-4 h-4" />
             <span className="sr-only">Finalizar</span>
           </Button>
+          
+          {/* Boleta */}
+          <BoletaTotal pedidoID={order.id} />
         </div>
       </TableCell>
     </TableRow>
