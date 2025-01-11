@@ -1,6 +1,6 @@
 "use client";
 
-import { HomeIcon } from 'lucide-react';
+import { HomeIcon } from "lucide-react";
 import React from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -13,7 +13,9 @@ export const Reloj = () => {
     new Date().toLocaleString("en-US", { timeZone: timezone })
   );
 
-  const formattedDate = format(now, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es });
+  const formattedDate = format(now, "EEEE, d 'de' MMMM 'de' yyyy", {
+    locale: es,
+  });
   const formattedTime = format(now, "HH:mm", { locale: es });
 
   return (
@@ -29,8 +31,8 @@ export const Reloj = () => {
               {formattedTime}
             </span>
           </div>
-          <Link 
-            href={"/empleado"} 
+          <Link
+            href={"/empleado"}
             className="text-gray-600 hover:text-gray-800 transition-colors duration-200"
             aria-label="Ir a la página de empleado"
           >

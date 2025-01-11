@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Plus, ShoppingCart, Search, Trash } from 'lucide-react';
+import { Plus, ShoppingCart, Search, Trash } from "lucide-react";
 import { empleados, mesas, platos } from "@prisma/client";
 import { useEmpleadoStore } from "@/store/empleado";
 import { useRouter } from "next/navigation";
@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import BoletaCocinaDialog from "../boleta/BoletaCocinaDialog";
 
 interface MesaProps {
   mesas: mesas[];
@@ -123,7 +124,11 @@ export default function MesaLibre({ mesas }: MesaProps) {
   );
 
   if (isLoading) {
-    return <div className="flex justify-center items-center h-[calc(100vh-8rem)]">Cargando...</div>;
+    return (
+      <div className="flex justify-center items-center h-[calc(100vh-8rem)]">
+        Cargando...
+      </div>
+    );
   }
 
   const handleRealizarPedido = async () => {
@@ -201,6 +206,7 @@ export default function MesaLibre({ mesas }: MesaProps) {
 
       setOrderItems([]);
       router.push("/empleado");
+
       alert("Pedido realizado correctamente");
     } catch (error) {
       console.error(error);
@@ -213,7 +219,8 @@ export default function MesaLibre({ mesas }: MesaProps) {
       <div className="w-full max-w-7xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
         <header className="bg-primary text-primary-foreground p-6">
           <h1 className="text-2xl sm:text-3xl font-bold">
-            Nuevo Pedido - Mesa(s) {mesas.map((mesa) => mesa.MesaID).join(", ")}
+            Nuevo Pedido - Mesa(s){" "}
+            {mesas.map((mesa) => mesa.NumeroMesa).join(", ")}
           </h1>
         </header>
         <div className="flex flex-col lg:flex-row p-4 sm:p-6 gap-6 lg:gap-8">
@@ -262,8 +269,12 @@ export default function MesaLibre({ mesas }: MesaProps) {
                     <TableBody>
                       {filteredPlatos.map((item) => (
                         <TableRow key={item.PlatoID}>
-                          <TableCell className="font-medium">{item.Descripcion}</TableCell>
-                          <TableCell>S/. {Number(item.Precio!).toFixed(2)}</TableCell>
+                          <TableCell className="font-medium">
+                            {item.Descripcion}
+                          </TableCell>
+                          <TableCell>
+                            S/. {Number(item.Precio!).toFixed(2)}
+                          </TableCell>
                           <TableCell>
                             <Button size="sm" onClick={() => addToOrder(item)}>
                               <Plus className="w-4 h-4 mr-2" /> Agregar
@@ -280,7 +291,9 @@ export default function MesaLibre({ mesas }: MesaProps) {
           <div className="w-full lg:w-1/2 space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl font-semibold">Resumen del Pedido</CardTitle>
+                <CardTitle className="text-xl font-semibold">
+                  Resumen del Pedido
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="max-h-[calc(100vh-28rem)] overflow-y-auto mb-4">
@@ -297,11 +310,18 @@ export default function MesaLibre({ mesas }: MesaProps) {
                     <TableBody>
                       {orderItems.map((item) => (
                         <TableRow key={item.PlatoID}>
-                          <TableCell className="font-medium">{item.Descripcion}</TableCell>
+                          <TableCell className="font-medium">
+                            {item.Descripcion}
+                          </TableCell>
                           <TableCell>{item.Cantidad}</TableCell>
-                          <TableCell>S/. {Number(item.Precio!).toFixed(2)}</TableCell>
                           <TableCell>
-                            S/. {(Number(item.Precio ?? 0) * item.Cantidad).toFixed(2)}
+                            S/. {Number(item.Precio!).toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            S/.{" "}
+                            {(Number(item.Precio ?? 0) * item.Cantidad).toFixed(
+                              2
+                            )}
                           </TableCell>
                           <TableCell>
                             <Button
@@ -319,22 +339,20 @@ export default function MesaLibre({ mesas }: MesaProps) {
                 </div>
                 <div className="flex justify-between items-center border-t pt-4">
                   <span className="text-xl font-semibold">Total:</span>
-                  <span className="text-2xl font-bold">S/. {total.toFixed(2)}</span>
+                  <span className="text-2xl font-bold">
+                    S/. {total.toFixed(2)}
+                  </span>
                 </div>
               </CardContent>
             </Card>
-            <Button
-              onClick={handleRealizarPedido}
-              className="w-full"
-              size="lg"
-              disabled={orderItems.length === 0}
-            >
-              <ShoppingCart className="w-5 h-5 mr-2" /> Realizar Pedido
-            </Button>
+            <BoletaCocinaDialog
+              mesas={mesas}
+              handleRealizarPedido={handleRealizarPedido}
+              orderItems={orderItems}
+            />
           </div>
         </div>
       </div>
     </div>
   );
 }
-

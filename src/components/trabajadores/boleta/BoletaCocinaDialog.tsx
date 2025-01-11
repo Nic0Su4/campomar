@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
-import CampomarReceipt from "@/components/trabajadores/boleta/Boleta";
+import BoletaCocina from "@/components/trabajadores/boleta/BoletaCocina"; // Asegúrate de importar el componente correcto
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,57 +11,64 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Check } from "lucide-react";
+import { ShoppingCart } from "lucide-react";
 
-export default function BoletaTotal({
-  pedidoID,
-  onFinishOrder,
-  buttonColor,
-  tipoPago,
+export default function BoletaCocinaDialog({
+  mesas,
+  handleRealizarPedido,
+  orderItems,
 }: {
-  pedidoID: string;
-  onFinishOrder: () => void;
-  buttonColor: string;
-  tipoPago: number | null;
+  mesas: any[];
+  handleRealizarPedido: () => void;
+  orderItems: any[];
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  // Configuración de la función de impresión
+  // Configuración de impresión
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
-    documentTitle: `Boleta-Pedido-${pedidoID}`,
+    documentTitle: `Boleta-Cocina`,
     onAfterPrint: () => console.log("Impresión completada."),
   });
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className={buttonColor} disabled={tipoPago === null}>
-          <Check className="w-4 h-4" />
+        <Button
+          size="lg"
+          className="w-full"
+          onClick={() => {
+            setIsOpen(true);
+          }}
+          disabled={orderItems.length === 0}
+        >
+          <ShoppingCart className="w-5 h-5 mr-2" /> Realizar Pedido
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Boleta del Pedido {pedidoID}</DialogTitle>
+          <DialogTitle>
+            Boleta de Cocina - Mesa(s){" "}
+            {mesas.map((mesa) => mesa.NumeroMesa).join(", ")}
+          </DialogTitle>
         </DialogHeader>
         <div className="mt-4 max-h-[80vh] overflow-y-auto">
-          {/* Referencia al contenido de la boleta */}
-          <CampomarReceipt
+          {/* Boleta de Cocina */}
+          <BoletaCocina
             ref={receiptRef}
-            pedidoID={pedidoID}
-            tipoPago={tipoPago}
+            orderItems={orderItems}
+            mesas={mesas}
           />
         </div>
         <div className="mt-4 flex justify-end space-x-2">
           <Button variant="outline" onClick={() => setIsOpen(false)}>
             Cerrar
           </Button>
-          {/* Llamada directa a la función handlePrint */}
           <Button
             onClick={() => {
               handlePrint && handlePrint();
-              onFinishOrder();
+              handleRealizarPedido();
               setIsOpen(false);
             }}
           >

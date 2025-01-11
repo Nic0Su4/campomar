@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { useEmpleadoStore } from "@/store/empleado";
 import { empleados, mesas } from "@prisma/client";
-import { X, PlusIcon, MinusIcon, Trash2 } from 'lucide-react';
+import { X, PlusIcon, MinusIcon, Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { MesaOcupadaAgregar } from "./Modal/MesaOcupadaAgregar";
@@ -322,9 +322,9 @@ export const MesaOcupada = () => {
                 <X className="w-4 h-4 mr-2" /> Cancelar Pedido
               </Button>
             </div>
-            <Button 
-              variant="link" 
-              className="w-full text-brandSecondary hover:text-brandSecondary/80 transition-colors" 
+            <Button
+              variant="link"
+              className="w-full text-brandSecondary hover:text-brandSecondary/80 transition-colors"
               onClick={handleGoBack}
             >
               ← Volver
@@ -343,11 +343,21 @@ export const MesaOcupada = () => {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="whitespace-nowrap">Plato</TableHead>
-                        <TableHead className="whitespace-nowrap">Cant.</TableHead>
-                        <TableHead className="whitespace-nowrap">Precio U.</TableHead>
-                        <TableHead className="whitespace-nowrap">Precio T.</TableHead>
-                        <TableHead className="whitespace-nowrap">Acciones</TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Plato
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Cant.
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Precio U.
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Precio T.
+                        </TableHead>
+                        <TableHead className="whitespace-nowrap">
+                          Acciones
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -360,9 +370,9 @@ export const MesaOcupada = () => {
                           </TableCell>
                           <TableCell>
                             S/.{" "}
-                            {(detalle.Cantidad * detalle.PrecioUnitario).toFixed(
-                              2
-                            )}
+                            {(
+                              detalle.Cantidad * detalle.PrecioUnitario
+                            ).toFixed(2)}
                           </TableCell>
                           <TableCell className="flex gap-2">
                             <Button
@@ -431,7 +441,9 @@ export const MesaOcupada = () => {
                 </div>
               </>
             ) : (
-              <p className="text-center text-gray-500">No se encontró ningún pedido activo para estas mesas.</p>
+              <p className="text-center text-gray-500">
+                No se encontró ningún pedido activo para estas mesas.
+              </p>
             )}
           </div>
         </div>
@@ -439,4 +451,3 @@ export const MesaOcupada = () => {
     </div>
   );
 };
-

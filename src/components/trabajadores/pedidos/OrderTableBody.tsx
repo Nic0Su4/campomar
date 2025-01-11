@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from 'lucide-react';
+import { Loader2 } from "lucide-react";
 
 const OrderTableBody = ({
   searchTerm,
@@ -146,8 +146,12 @@ const OrderTableBody = ({
                   key={detalle.DetalleID}
                   className="flex justify-between items-center border-b pb-2"
                 >
-                  <span className="font-medium">{detalle.platos.Descripcion}</span>
-                  <span className="text-sm text-muted-foreground">{detalle.Cantidad}x</span>
+                  <span className="font-medium">
+                    {detalle.platos.Descripcion}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    {detalle.Cantidad}x
+                  </span>
                   <span className="font-semibold">
                     S/. {(detalle.platos.Precio * detalle.Cantidad).toFixed(2)}
                   </span>
@@ -165,4 +169,3 @@ const OrderTableBody = ({
 };
 
 export default OrderTableBody;
-

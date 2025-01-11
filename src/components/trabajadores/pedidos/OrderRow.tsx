@@ -47,19 +47,21 @@ const OrderRow = ({
     <TableRow>
       {/* ID del pedido */}
       <TableCell className="font-medium">{order.id}</TableCell>
-      
+
       {/* Mesa */}
       <TableCell>{order.table}</TableCell>
-      
+
       {/* Cantidad de productos */}
       <TableCell>{order.items}</TableCell>
-      
+
       {/* Total */}
-      <TableCell className="text-right">S/. {Number(order.total).toFixed(2)}</TableCell>
-      
+      <TableCell className="text-right">
+        S/. {Number(order.total).toFixed(2)}
+      </TableCell>
+
       {/* Fecha y hora */}
       <TableCell className="hidden md:table-cell">{`${order.date} ${order.time}`}</TableCell>
-      
+
       {/* Acciones */}
       <TableCell className="text-right">
         <div className="flex justify-end items-center space-x-2">
@@ -82,18 +84,12 @@ const OrderRow = ({
           </Select>
 
           {/* Botón de finalizar pedido */}
-          <Button
-            size="sm"
-            className={buttonColor}
-            onClick={onFinishOrder}
-            disabled={tipoPago === null}
-          >
-            <Check className="w-4 h-4" />
-            <span className="sr-only">Finalizar</span>
-          </Button>
-          
-          {/* Boleta */}
-          <BoletaTotal pedidoID={order.id} />
+          <BoletaTotal
+            pedidoID={order.id}
+            onFinishOrder={onFinishOrder}
+            buttonColor={buttonColor}
+            tipoPago={tipoPago}
+          />
         </div>
       </TableCell>
     </TableRow>
