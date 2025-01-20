@@ -26,13 +26,24 @@ export default function BoletaTotal({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
+  const [isPrinted, setIsPrinted] = useState(false);
 
   // Configuración de la función de impresión
   const handlePrint = useReactToPrint({
     contentRef: receiptRef,
     documentTitle: `Boleta-Pedido-${pedidoID}`,
-    onAfterPrint: () => console.log("Impresión completada."),
+    onAfterPrint: () => setIsPrinted(true),
   });
+
+  const handleConfirmPrint = () => {
+    if (isPrinted) {
+      onFinishOrder();
+      setIsOpen(false);
+      setIsPrinted(false);
+    } else {
+      alert("Primero debe imprimir la boleta antes de confirmar el pedido.");
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -60,12 +71,17 @@ export default function BoletaTotal({
           {/* Llamada directa a la función handlePrint */}
           <Button
             onClick={() => {
-              handlePrint && handlePrint();
-              onFinishOrder();
-              setIsOpen(false);
+              handlePrint();
             }}
           >
             Imprimir
+          </Button>
+          <Button
+            onClick={handleConfirmPrint}
+            variant="default"
+            disabled={!isPrinted}
+          >
+            Confirmar
           </Button>
         </div>
       </DialogContent>
