@@ -85,13 +85,19 @@ export const DashboardSummary = () => {
   }, [fetchData, dateRange]);
 
   const setPredefinedRange = (days: number) => {
-    const endDate = new Date().toISOString().split("T")[0];
-    const startDate = new Date();
+    const currentDate = new Date();
+
+    const endDate = new Date(currentDate);
+    endDate.setUTCHours(5, 0, 0, 0);
+    const startDate = new Date(endDate);
     startDate.setDate(startDate.getDate() - days);
 
+    endDate.setDate(endDate.getDate() + 1);
+    endDate.setUTCHours(4, 59, 59, 999);
+
     setDateRange({
-      startDate: startDate.toISOString().split("T")[0],
-      endDate,
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
     });
 
     setCustomDateMode(false);
@@ -100,12 +106,17 @@ export const DashboardSummary = () => {
 
   const setFullYearRange = () => {
     const currentDate = new Date();
-    const startDate = new Date(currentDate.getFullYear(), 0, 1);
-    const endDate = currentDate;
+
+    const startDate = new Date(currentDate.getUTCFullYear(), 0, 1); // Primer día del año (sin hora)
+    startDate.setUTCHours(5, 0, 0, 0); // Ajustar a las 00:00 UTC -5
+
+    // Ajustar al final del día actual en UTC -5
+    const endDate = new Date(currentDate);
+    endDate.setUTCHours(4, 59, 59, 999); // Ajustar a las 23:59 UTC -5
 
     setDateRange({
-      startDate: startDate.toISOString().split("T")[0],
-      endDate: endDate.toISOString().split("T")[0],
+      startDate: startDate.toISOString(),
+      endDate: endDate.toISOString(),
     });
 
     setCustomDateMode(false);
@@ -113,19 +124,24 @@ export const DashboardSummary = () => {
   };
 
   const handleDateChange = (key: "startDate" | "endDate", value: string) => {
-    setDateRange((prev) => {
-      const updatedRange = { ...prev, [key]: value };
-      return updatedRange;
-    });
+    const selectedDate = new Date(value);
+
+    const adjustedDate =
+      key === "startDate"
+        ? new Date(selectedDate.setUTCHours(5, 0, 0, 0))
+        : new Date(selectedDate.setUTCHours(4, 59, 59, 999));
+
+    setDateRange((prev) => ({
+      ...prev,
+      [key]: adjustedDate.toISOString(),
+    }));
+
+    setCustomDateMode(true);
+    setSelectedPredefinedRange(null);
   };
 
   const handleCustomSearch = () => {
-    if (
-      dateRange.startDate &&
-      dateRange.endDate &&
-      new Date(dateRange.startDate) <= new Date(dateRange.endDate)
-    ) {
-      setSelectedPredefinedRange(null);
+    if (dateRange.startDate && dateRange.endDate) {
       fetchData();
     }
   };
@@ -146,7 +162,7 @@ export const DashboardSummary = () => {
               </Label>
               <div className="flex flex-wrap gap-2">
                 {[
-                  { days: 1, label: "Hoy" },
+                  { days: 0, label: "Hoy" },
                   { days: 7, label: "Últimos 7 días" },
                   { days: 30, label: "Últimos 30 días" },
                   { days: 365, label: "De todo el año" },
@@ -180,13 +196,21 @@ export const DashboardSummary = () => {
                   <Input
                     id="startDate"
                     type="date"
-                    value={dateRange.startDate || ""}
+                    value={
+                      dateRange.startDate
+                        ? dateRange.startDate.split("T")[0]
+                        : ""
+                    }
                     onChange={(e) => {
                       handleDateChange("startDate", e.target.value);
                       setCustomDateMode(true);
                       setSelectedPredefinedRange(null);
                     }}
-                    max={dateRange.endDate || undefined}
+                    max={
+                      dateRange.endDate
+                        ? dateRange.endDate.split("T")[0]
+                        : undefined
+                    }
                     className="border-gray-300 focus:ring-gray-400 focus:border-gray-400"
                   />
                 </div>
@@ -195,13 +219,19 @@ export const DashboardSummary = () => {
                   <Input
                     id="endDate"
                     type="date"
-                    value={dateRange.endDate || ""}
+                    value={
+                      dateRange.endDate ? dateRange.endDate.split("T")[0] : ""
+                    }
                     onChange={(e) => {
                       handleDateChange("endDate", e.target.value);
                       setCustomDateMode(true);
                       setSelectedPredefinedRange(null);
                     }}
-                    min={dateRange.startDate || undefined}
+                    min={
+                      dateRange.startDate
+                        ? dateRange.startDate.split("T")[0]
+                        : undefined
+                    }
                     className="border-gray-300 focus:ring-gray-400 focus:border-gray-400"
                   />
                 </div>
