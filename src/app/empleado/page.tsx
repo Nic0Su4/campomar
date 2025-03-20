@@ -36,22 +36,24 @@ const EmpleadoPage = () => {
   }
 
   return (
-    <div className="flex gap-6 flex-col md:flex-row justify-around items-center w-4/5">
-      <CardEmpleado
-        texto="Ver Sala"
-        icono={<Armchair size={60} />}
-        direccion="/empleado/sala"
-      />
-      <CardEmpleado
-        texto="Ver Carta"
-        icono={<BookOpen size={60} />}
-        direccion="/empleado/carta"
-      />
-      <CardEmpleado
-        texto="Pedidos"
-        icono={<HandPlatter size={60} />}
-        direccion="/empleado/pedidos"
-      />
+    <div className="container mx-auto py-8 px-4">
+      <div className="flex flex-col sm:flex-row gap-4 md:gap-6 justify-center items-center w-full">
+        <CardEmpleado
+          texto="Ver Sala"
+          icono={<Armchair size={60} />}
+          direccion="/empleado/sala"
+        />
+        <CardEmpleado
+          texto="Ver Carta"
+          icono={<BookOpen size={60} />}
+          direccion="/empleado/carta"
+        />
+        <CardEmpleado
+          texto="Pedidos"
+          icono={<HandPlatter size={60} />}
+          direccion="/empleado/pedidos"
+        />
+      </div>
     </div>
   );
 };

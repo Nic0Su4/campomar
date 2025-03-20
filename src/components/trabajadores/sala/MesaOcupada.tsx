@@ -22,6 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import BoletaTotal from "../boleta/BoletaTotal";
 
 export const MesaOcupada = () => {
   const empleado: empleados = useEmpleadoStore((state: any) => state.empleado);
@@ -286,6 +287,18 @@ export const MesaOcupada = () => {
       setIsLoading(false);
     }
   };
+  const buttonColor = (() => {
+    switch (tipoPago) {
+      case 1:
+        return "bg-[#00631b] hover:bg-[#00631b]/90";
+      case 2:
+        return "bg-[#931194] hover:bg-[#931194]/90";
+      case 3:
+        return "bg-[#f7762c] hover:bg-[#f7762c]/90";
+      default:
+        return "";
+    }
+  })();
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
@@ -429,14 +442,13 @@ export const MesaOcupada = () => {
                         <SelectItem value="3">POS</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button
-                      size="lg"
-                      onClick={handlePagarPedido}
-                      disabled={tipoPago === null || isLoading}
-                      className="bg-brandSecondary hover:bg-brandSecondary/90 text-white transition-colors"
-                    >
-                      Pagar
-                    </Button>
+
+                    <BoletaTotal
+                      pedidoID={pedido.PedidoID}
+                      onFinishOrder={handlePagarPedido}
+                      buttonColor={buttonColor}
+                      tipoPago={tipoPago}
+                    />
                   </div>
                 </div>
               </>

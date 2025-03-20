@@ -6,12 +6,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Edit, PlusCircle, Trash2 } from 'lucide-react';
+import { Edit, PlusCircle, Trash2, FileText } from 'lucide-react';
 import { mesas } from "@prisma/client";
 import { Spinner } from "@/components/ui/spinner";
 
+interface PedidoActivo {
+  PedidoID: number;
+  tipoPago: number;
+}
+
 export const GestionMesas = () => {
   const [tables, setTables] = useState<mesas[]>([]);
+  const [activePedidos, setActivePedidos] = useState<Record<number, PedidoActivo>>({});
   const [newTable, setNewTable] = useState<mesas>({
     MesaID: 0,
     NumeroMesa: 0,
@@ -23,16 +29,15 @@ export const GestionMesas = () => {
   useEffect(() => {
     const fetchTables = async () => {
       try {
-        const response = await fetch("/api/mesas", {
-          method: "GET",
-        });
+        const response = await fetch("/api/mesas", { method: "GET" });
 
-        if (!response.ok) {
-          throw new Error("Error al obtener las mesas");
-        }
+        if (!response.ok) throw new Error("Error al obtener las mesas");
 
         const mesas = await response.json();
         setTables(mesas);
+
+        // Fetch active pedidos for each table
+        fetchActivePedidosForTables(mesas);
       } catch (error) {
         console.error(error);
       }
@@ -41,32 +46,52 @@ export const GestionMesas = () => {
     fetchTables();
   }, []);
 
+  // Fetch active pedidos for all tables
+  const fetchActivePedidosForTables = async (mesas: mesas[]) => {
+    try {
+      const pedidosMap: Record<number, PedidoActivo> = {};
+
+      // For each table with status "Ocupada", fetch its active pedido
+      const promises = mesas
+        .filter(mesa => mesa.Estado === "Ocupada")
+        .map(async (mesa) => {
+          const pedidoResponse = await fetch(`/api/pedidos/activo/mesa/${mesa.MesaID}`);
+          if (pedidoResponse.ok) {
+            const pedido = await pedidoResponse.json();
+            if (pedido && pedido.PedidoID) {
+              pedidosMap[mesa.MesaID] = {
+                PedidoID: pedido.PedidoID,
+                tipoPago: pedido.tipoPago || 1 // Default to 1 if tipoPago is not provided
+              };
+            }
+          }
+        });
+
+      await Promise.all(promises);
+      setActivePedidos(pedidosMap);
+    } catch (error) {
+      console.error("Error fetching active pedidos:", error);
+    }
+  };
+
   const handleAddTable = async () => {
     if (newTable?.NumeroMesa && newTable.Estado) {
       setLoadingTables(true);
       try {
         const response = await fetch("/api/mesas", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             NumeroMesa: newTable.NumeroMesa,
             Estado: newTable.Estado,
           }),
         });
 
-        if (!response.ok) {
-          throw new Error("Error al agregar la mesa");
-        }
+        if (!response.ok) throw new Error("Error al agregar la mesa");
 
         const mesa = await response.json();
         setTables([...tables, mesa]);
-        setNewTable({
-          MesaID: 0,
-          Estado: "Libre",
-          NumeroMesa: 0,
-        });
+        setNewTable({ MesaID: 0, Estado: "Libre", NumeroMesa: 0 });
       } catch (error) {
         console.error(error);
       } finally {
@@ -78,25 +103,19 @@ export const GestionMesas = () => {
   const handleEditTable = async () => {
     if (editingTable?.NumeroMesa && editingTable.Estado) {
       setLoadingTables(true);
-
       try {
         const response = await fetch(`/api/mesas/${editingTable.MesaID}`, {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             NumeroMesa: editingTable.NumeroMesa,
             Estado: editingTable.Estado,
           }),
         });
 
-        if (!response.ok) {
-          throw new Error("Error al actualizar la mesa");
-        }
+        if (!response.ok) throw new Error("Error al actualizar la mesa");
 
         const updatedMesa = await response.json();
-
         setTables((prevTables) =>
           prevTables.map((mesa) =>
             mesa.MesaID === updatedMesa.MesaID ? updatedMesa : mesa
@@ -114,13 +133,9 @@ export const GestionMesas = () => {
 
   const handleDeleteTable = async (id: number) => {
     try {
-      const response = await fetch(`/api/mesas/${id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(`/api/mesas/${id}`, { method: "DELETE" });
 
-      if (!response.ok) {
-        throw new Error("Error al eliminar la mesa");
-      }
+      if (!response.ok) throw new Error("Error al eliminar la mesa");
 
       setTables(tables.filter((table) => table.MesaID !== id));
     } catch (error) {
@@ -132,11 +147,44 @@ export const GestionMesas = () => {
     setEditingTable(table);
   };
 
+  const handleFinishOrder = async (tableId: number) => {
+    try {
+      // Update the table status to "Libre"
+      const response = await fetch(`/api/mesas/${tableId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          Estado: "Libre",
+        }),
+      });
+
+      if (!response.ok) throw new Error("Error al actualizar estado de la mesa");
+
+      // Update the local tables state
+      setTables((prevTables) =>
+        prevTables.map((mesa) =>
+          mesa.MesaID === tableId ? { ...mesa, Estado: "Libre" } : mesa
+        )
+      );
+
+      // Remove the active pedido for this table
+      const newActivePedidos = { ...activePedidos };
+      delete newActivePedidos[tableId];
+      setActivePedidos(newActivePedidos);
+
+      console.log("Pedido Finalizado");
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
     <TabsContent value="tables">
       <Card className="border-t-2 border-gray-200">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-800">Gestión de Mesas</CardTitle>
+          <CardTitle className="text-xl font-semibold text-gray-800">
+            Gestión de Mesas
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4 mb-6">
@@ -146,19 +194,17 @@ export const GestionMesas = () => {
               </Label>
               <Input
                 id="tableNumber"
-                value={
-                  editingTable ? editingTable.NumeroMesa : newTable.NumeroMesa
-                }
+                value={editingTable ? editingTable.NumeroMesa : newTable.NumeroMesa}
                 onChange={(e) =>
                   editingTable
                     ? setEditingTable({
-                        ...editingTable,
-                        NumeroMesa: Number(e.target.value),
-                      })
+                      ...editingTable,
+                      NumeroMesa: Number(e.target.value),
+                    })
                     : setNewTable({
-                        ...newTable,
-                        NumeroMesa: Number(e.target.value),
-                      })
+                      ...newTable,
+                      NumeroMesa: Number(e.target.value),
+                    })
                 }
                 placeholder="Número de Mesa"
                 type="number"
@@ -170,49 +216,30 @@ export const GestionMesas = () => {
               className="mt-auto bg-gray-800 hover:bg-gray-700 text-white"
               disabled={loadingTables}
             >
-              {loadingTables ? (
-                <>
-                  <Spinner className="mr-2 h-4 w-4" /> {editingTable ? "Guardando..." : "Cargando..."}
-                </>
-              ) : (
-                <>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  {editingTable ? "Guardar Cambios" : "Añadir Mesa"}
-                </>
-              )}
+              {loadingTables ? <Spinner className="mr-2 h-4 w-4" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+              {editingTable ? "Guardar Cambios" : "Añadir Mesa"}
             </Button>
           </div>
+
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {tables.map((table) => (
-              <div
-                key={table.MesaID}
-                className="relative group"
-              >
-                <div
-                  className={`w-full aspect-square rounded-lg flex items-center justify-center text-2xl font-bold transition-colors ${
-                    table.Estado === 'Libre' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                  }`}
-                >
+              <div key={table.MesaID} className="relative group">
+                <div className={`w-full aspect-square rounded-lg flex items-center justify-center text-2xl font-bold transition-colors 
+                  ${table.Estado === 'Libre' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
                   {table.NumeroMesa}
                 </div>
-                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center 
+                  opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
                   <div className="flex space-x-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => selectTableForEdit(table)}
-                      className="bg-white text-gray-800 hover:bg-gray-100"
-                    >
+                    <Button variant="secondary" size="sm" onClick={() => selectTableForEdit(table)}
+                      className="bg-white text-gray-800 hover:bg-gray-100">
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => handleDeleteTable(table.MesaID)}
-                      className="bg-white text-red-600 hover:bg-red-50"
-                    >
+                    <Button variant="secondary" size="sm" onClick={() => handleDeleteTable(table.MesaID)}
+                      className="bg-white text-red-600 hover:bg-red-50">
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                    
                   </div>
                 </div>
                 <div className="mt-2 text-center text-sm font-medium text-gray-700">
@@ -226,4 +253,3 @@ export const GestionMesas = () => {
     </TabsContent>
   );
 };
-
