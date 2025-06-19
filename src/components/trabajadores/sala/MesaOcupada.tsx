@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { useEmpleadoStore } from "@/store/empleado";
 import { empleados, mesas } from "@prisma/client";
-import { X, PlusIcon, MinusIcon, Trash2 } from "lucide-react";
+import { X, PlusIcon, MinusIcon, Trash2, Printer } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { MesaOcupadaAgregar } from "./Modal/MesaOcupadaAgregar";
@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import BoletaTotal from "../boleta/BoletaTotal";
+import BoletaCocinaImprimir from "@/components/trabajadores/boleta/BoletaCocinaPrint"; // Ensure this file exists at the specified path or update the path to the correct location.
 
 export const MesaOcupada = () => {
   const empleado: empleados = useEmpleadoStore((state: any) => state.empleado);
@@ -35,6 +36,8 @@ export const MesaOcupada = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [tipoPago, setTipoPago] = useState<number | null>(null);
+  const [comentarioCocina, setComentarioCocina] = useState("");
+  const [showComentarioInput, setShowComentarioInput] = useState(false);
 
   // Llamada a la API para obtener el pedido relacionado con esas mesas
   const fetchPedido = useCallback(async () => {
@@ -334,6 +337,64 @@ export const MesaOcupada = () => {
               >
                 <X className="w-4 h-4 mr-2" /> Cancelar Pedido
               </Button>
+              <BoletaCocinaImprimir
+                mesas={selectedTables}
+                orderItems={
+                  pedido?.detalles.map((detalle: any) => ({
+                    PlatoID: detalle.PlatoID,
+                    Descripcion: detalle.descripcionPlato,
+                    Cantidad: detalle.Cantidad,
+                  })) || []
+                }
+                comentario={comentarioCocina}
+                triggerButton={
+                  <Button
+                    className="w-full transition duration-200 ease-in-out transform hover:scale-105 bg-blue-600"
+                    disabled={!pedido || pedido.detalles.length === 0}
+                  >
+                    <Printer className="w-4 h-4 mr-2" /> Imprimir Boleta
+                  </Button>
+                }
+              />
+              {/* Botón para mostrar input de comentario */}
+              {!showComentarioInput ? (
+                <Button
+                  variant="secondary"
+                  onClick={() => setShowComentarioInput(true)}
+                >
+                  Agregar instrucción para cocina
+                </Button>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <textarea
+                    className="border rounded p-2 w-full"
+                    rows={2}
+                    placeholder="Escribe una instrucción para la cocina..."
+                    value={comentarioCocina}
+                    onChange={(e) => setComentarioCocina(e.target.value)}
+                    autoFocus
+                  />
+                  <div className="flex gap-2 justify-end">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setComentarioCocina("");
+                        setShowComentarioInput(false);
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => setShowComentarioInput(false)}
+                      disabled={comentarioCocina.trim() === ""}
+                    >
+                      Guardar instrucción
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
             <Button
               variant="link"

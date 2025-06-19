@@ -81,7 +81,7 @@ const CampomarReceipt = forwardRef<HTMLDivElement, CampomarReceiptProps>(
         className="max-w-md mx-auto my-8 p-6 bg-white shadow-lg rounded-lg"
       >
         <div className="text-center mb-6">
-          <h1 className="text-2xl font-bold">Restaurante Campomar</h1>
+          <h1 className="text-2xl font-bold">Restaurante Campomar Criollo</h1>
           <p className="text-sm text-gray-600">Boleta de Venta</p>
         </div>
 
