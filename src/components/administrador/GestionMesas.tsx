@@ -147,36 +147,6 @@ export const GestionMesas = () => {
     setEditingTable(table);
   };
 
-  const handleFinishOrder = async (tableId: number) => {
-    try {
-      // Update the table status to "Libre"
-      const response = await fetch(`/api/mesas/${tableId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          Estado: "Libre",
-        }),
-      });
-
-      if (!response.ok) throw new Error("Error al actualizar estado de la mesa");
-
-      // Update the local tables state
-      setTables((prevTables) =>
-        prevTables.map((mesa) =>
-          mesa.MesaID === tableId ? { ...mesa, Estado: "Libre" } : mesa
-        )
-      );
-
-      // Remove the active pedido for this table
-      const newActivePedidos = { ...activePedidos };
-      delete newActivePedidos[tableId];
-      setActivePedidos(newActivePedidos);
-
-      console.log("Pedido Finalizado");
-    } catch (error) {
-      console.error(error);
-    }
-  };
 
   return (
     <TabsContent value="tables">

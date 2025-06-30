@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Check } from "lucide-react";
+import { ModalConfirm } from "./ModalConfirm";
 
 export default function BoletaTotal({
   pedidoID,
@@ -26,23 +27,12 @@ export default function BoletaTotal({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const receiptRef = useRef<HTMLDivElement>(null);
-  const [isPrinted, setIsPrinted] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
-  // Configuración de la función de impresión
-  const handlePrint = useReactToPrint({
-    contentRef: receiptRef,
-    documentTitle: `Boleta-Pedido-${pedidoID}`,
-    onAfterPrint: () => setIsPrinted(true),
-  });
-
-  const handleConfirmPrint = () => {
-    if (isPrinted) {
-      onFinishOrder();
-      setIsOpen(false);
-      setIsPrinted(false);
-    } else {
-      alert("Primero debe imprimir la boleta antes de confirmar el pedido.");
-    }
+  const handleConfirm = () => {
+    onFinishOrder();
+    setShowConfirm(false);
+    setIsOpen(false);
   };
 
   return (
@@ -68,23 +58,21 @@ export default function BoletaTotal({
           <Button variant="outline" onClick={() => setIsOpen(false)}>
             Cerrar
           </Button>
-          {/* Llamada directa a la función handlePrint */}
           <Button
-            onClick={() => {
-              handlePrint();
-            }}
-          >
-            Imprimir
-          </Button>
-          <Button
-            onClick={handleConfirmPrint}
             variant="default"
-            disabled={!isPrinted}
+            onClick={() => setShowConfirm(true)}
+            disabled={tipoPago === null}
           >
             Confirmar
           </Button>
         </div>
       </DialogContent>
+      <ModalConfirm
+        isOpen={showConfirm}
+        onClose={() => setShowConfirm(false)}
+        onConfirm={handleConfirm}
+        message="¿Estás seguro de finalizar el pedido?"
+      />
     </Dialog>
   );
 }
