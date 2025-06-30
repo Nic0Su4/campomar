@@ -10,6 +10,7 @@ import { Edit, PlusCircle, Trash2 } from 'lucide-react';
 import { mesas } from "@prisma/client";
 import { Spinner } from "@/components/ui/spinner";
 import PedidosModal from "@/components/administrador/Gestion/ModalPedido";
+import { ModalConfirm } from "@/components/trabajadores/boleta/ModalConfirm";
 
 interface PedidoActivo {
   PedidoID: number;
@@ -26,6 +27,8 @@ export const GestionMesas = () => {
   });
   const [editingTable, setEditingTable] = useState<mesas | null>(null);
   const [loadingTables, setLoadingTables] = useState<boolean>(false);
+  const [confirmDelete, setConfirmDelete] = useState<{ open: boolean; mesaId: number | null }>({ open: false, mesaId: null });
+  const [errorMsg, setErrorMsg] = useState<string>("");
 
   useEffect(() => {
     const fetchTables = async () => {
@@ -102,33 +105,45 @@ export const GestionMesas = () => {
   };
 
   const handleEditTable = async () => {
-    if (editingTable?.NumeroMesa && editingTable.Estado) {
-      setLoadingTables(true);
-      try {
-        const response = await fetch(`/api/mesas/${editingTable.MesaID}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            NumeroMesa: editingTable.NumeroMesa,
-            Estado: editingTable.Estado,
-          }),
-        });
+    if (!editingTable?.NumeroMesa || editingTable.NumeroMesa <= 0) {
+      setErrorMsg("El número de mesa debe ser mayor que cero.");
+      return;
+    }
+    // Validar que no exista otra mesa con el mismo número
+    const existe = tables.some(
+      (mesa) => mesa.NumeroMesa === editingTable.NumeroMesa && mesa.MesaID !== editingTable.MesaID
+    );
+    if (existe) {
+      setErrorMsg("Ya existe una mesa con ese número.");
+      return;
+    }
+    setLoadingTables(true);
+    setErrorMsg("");
+    try {
+      const response = await fetch(`/api/mesas/${editingTable.MesaID}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          NumeroMesa: editingTable.NumeroMesa,
+          Estado: editingTable.Estado,
+        }),
+      });
 
-        if (!response.ok) throw new Error("Error al actualizar la mesa");
+      if (!response.ok) throw new Error("Error al actualizar la mesa");
 
-        const updatedMesa = await response.json();
-        setTables((prevTables) =>
-          prevTables.map((mesa) =>
-            mesa.MesaID === updatedMesa.MesaID ? updatedMesa : mesa
-          )
-        );
-
-        setEditingTable(null);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoadingTables(false);
-      }
+      const updatedMesa = await response.json();
+      setTables((prevTables) =>
+        prevTables.map((mesa) =>
+          mesa.MesaID === updatedMesa.MesaID ? updatedMesa : mesa
+        )
+      );
+      setEditingTable(null);
+      setErrorMsg("");
+    } catch (error) {
+      setErrorMsg("Error al actualizar la mesa");
+      console.error(error);
+    } finally {
+      setLoadingTables(false);
     }
   };
 
@@ -166,21 +181,29 @@ export const GestionMesas = () => {
               <Input
                 id="tableNumber"
                 value={editingTable ? editingTable.NumeroMesa : newTable.NumeroMesa}
-                onChange={(e) =>
-                  editingTable
-                    ? setEditingTable({
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  if (editingTable) {
+                    setEditingTable({
                       ...editingTable,
-                      NumeroMesa: Number(e.target.value),
-                    })
-                    : setNewTable({
+                      NumeroMesa: value,
+                    });
+                  } else {
+                    setNewTable({
                       ...newTable,
-                      NumeroMesa: Number(e.target.value),
-                    })
-                }
+                      NumeroMesa: value,
+                    });
+                  }
+                  setErrorMsg("");
+                }}
                 placeholder="Número de Mesa"
                 type="number"
+                min={1}
                 className="mt-1 border-gray-300 focus:border-gray-400 focus:ring focus:ring-gray-200 focus:ring-opacity-50"
               />
+              {errorMsg && (
+                <div className="text-red-600 text-xs mt-1">{errorMsg}</div>
+              )}
             </div>
             <Button
               onClick={editingTable ? handleEditTable : handleAddTable}
@@ -206,11 +229,10 @@ export const GestionMesas = () => {
                       className="bg-white text-gray-800 hover:bg-gray-100">
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button variant="secondary" size="sm" onClick={() => handleDeleteTable(table.MesaID)}
+                    <Button variant="secondary" size="sm" onClick={() => setConfirmDelete({ open: true, mesaId: table.MesaID })}
                       className="bg-white text-red-600 hover:bg-red-50">
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                    {/* Botón para mostrar el modal de pedido */}
                     <PedidosModal mesas={[table.MesaID]} triggerText="Pedido" />
                   </div>
                 </div>
@@ -222,6 +244,15 @@ export const GestionMesas = () => {
           </div>
         </CardContent>
       </Card>
+      <ModalConfirm
+        isOpen={confirmDelete.open}
+        onClose={() => setConfirmDelete({ open: false, mesaId: null })}
+        onConfirm={() => {
+          if (confirmDelete.mesaId !== null) handleDeleteTable(confirmDelete.mesaId);
+          setConfirmDelete({ open: false, mesaId: null });
+        }}
+        message="¿Estás seguro de que deseas eliminar esta mesa?"
+      />
     </TabsContent>
   );
 };

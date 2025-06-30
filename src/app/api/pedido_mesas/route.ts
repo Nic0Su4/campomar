@@ -80,10 +80,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// PedidoMesaID int AI PK
-// PedidoID int
-// MesaID int
-
 const postSchema = yup.object({
   PedidoID: yup.number().required(),
   MesaID: yup.number().required(),
