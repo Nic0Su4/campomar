@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { useReactToPrint } from "react-to-print";
 import CampomarReceipt from "@/components/trabajadores/boleta/Boleta";
 import { Button } from "@/components/ui/button";
 import {

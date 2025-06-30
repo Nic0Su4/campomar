@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Edit, PlusCircle, Trash2, FileText } from 'lucide-react';
+import { Edit, PlusCircle, Trash2 } from 'lucide-react';
 import { mesas } from "@prisma/client";
 import { Spinner } from "@/components/ui/spinner";
+import PedidosModal from "@/components/administrador/Gestion/ModalPedido";
 
 interface PedidoActivo {
   PedidoID: number;
@@ -209,7 +210,8 @@ export const GestionMesas = () => {
                       className="bg-white text-red-600 hover:bg-red-50">
                       <Trash2 className="h-4 w-4" />
                     </Button>
-                    
+                    {/* Botón para mostrar el modal de pedido */}
+                    <PedidosModal mesas={[table.MesaID]} triggerText="Pedido" />
                   </div>
                 </div>
                 <div className="mt-2 text-center text-sm font-medium text-gray-700">

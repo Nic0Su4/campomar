@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
 
     if (pedidosMesas.length === 0 || !pedidosMesas[0].pedidos) {
       return NextResponse.json(
-        { message: "No se encontró un pedido para esas mesas" },
+        { message: "Mesa sin pedido" },
         { status: 404 }
       );
     }
